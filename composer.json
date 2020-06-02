@@ -1,0 +1,13 @@
+{
+    "name": "dennyweiss/laradock-configuration",
+    "description": "custom laradock configuration",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Denny Weiß",
+            "email": "denny@fa-weiss.eu"
+        }
+    ],
+    "require": {}
+}
