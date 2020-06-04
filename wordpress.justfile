@@ -32,6 +32,13 @@ indent2x := indent + indent
 task-prefix := '>>' + indent
 warn-prefix := indent2x + 'WARN: '
 
+# Show available commands
+default:
+  #!/usr/bin/env bash
+  just --list
+
+alias help := default
+
 # Call docker-compose in '.docker' directory
 dc +arguments='':
   #!/usr/bin/env bash
