@@ -282,7 +282,7 @@ services:
       image: eteamacr.azurecr.io/e-team/wordpress/nginx:20200605
       volumes:
         - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}${APP_CODE_CONTAINER_FLAG}
-        - ${NGINX_HOST_LOG_PATH}:/var/log/nginx
+        - ${NGINX_HOST_LOG_PATH}:/var/log/nginx:rw
         - ${NGINX_H5PB_PATH}:/etc/nginx/h5bp/:ro
         - ${NGINX_SITES_PATH}:/etc/nginx/sites-available:ro
         - ${NGINX_SSL_PATH}:/etc/nginx/ssl:rw
