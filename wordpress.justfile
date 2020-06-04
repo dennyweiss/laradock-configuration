@@ -59,6 +59,10 @@ stack-up:
 
 alias stackup := stack-up
 
+# Stop running services
+stop +parameters_and_or_services='':
+  @docker-compose stop {{parameters_and_or_services}}
+
 # ---- @warn below are old just definitions
 
 # Helper functions
@@ -90,20 +94,6 @@ _print_error message:
   #!/usr/bin/env bash
   echo ''
   echo "{{warn-prefix}}{{message}}"
-
-# Stops all or explicitly named services
-stop +services='':
-  #!/usr/bin/env bash
-  echo ''
-  if [[ "{{debug-mode}}" == 'true' ]]; then
-    echo "{{indent2x}}as-daemon: '{{as-daemon}}'"
-    echo "{{indent2x}}services:  '{{services}}'"
-    echo ''
-  fi
-
-  {{dry-run-script}}
-  services="{{services}}"
-  {{move-to-docker-dir}} docker-compose {{docker-compose-project-name}} stop ${services}
 
 # Run commands inside running container
 exec service +subcommands='':
