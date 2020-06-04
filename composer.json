@@ -9,6 +9,9 @@
             "email": "denny@fa-weiss.eu"
         }
     ],
+    "bin": [
+      "src/laradock-configuration-wordpress-init"
+    ],
     "repositories": [
       {
         "type": "vcs",

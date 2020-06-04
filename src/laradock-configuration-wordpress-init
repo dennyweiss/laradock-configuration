@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+link_files() {
+  echo "> '${1}'"
+}  
+
+while read -r file; do link_files "${file}" ; done < <(
+  cat <<DEPENDENCIES
+  vendor/dennyweiss/laradock-configuration/.env.dc.wordpress::env.dc
+  vendor/dennyweiss/laradock-configuration/docker-compose.wordpress.yml::docker-compose.yml
+  vendor/dennyweiss/laradock-configuration/.envrc.default::.envrc
+DEPENDENCIES
+)
