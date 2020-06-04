@@ -32,6 +32,10 @@ indent2x := indent + indent
 task-prefix := '>>' + indent
 warn-prefix := indent2x + 'WARN: '
 
+## @info new variables
+config-package-path-prefix := 'vendor/dennyweiss/laradock-configuration'
+config-package-commands-path-prefix := config-package-path-prefix + '/src/commands'
+
 # Show available commands
 default:
   #!/usr/bin/env bash
@@ -42,6 +46,20 @@ alias help := default
 # docker-compose shorthand
 dc +parameters_and_or_services:
   @docker-compose {{parameters_and_or_services}}
+
+# Start one or more services
+up +parameters_and_or_services:
+  @docker-compose up {{ parameters_and_or_services }}
+
+alias start := up
+
+# Start service stack in background
+stack-up:
+  @'{{config-package-commands-path-prefix}}/docker-compose-stack-up'
+
+alias stackup := stack-up
+
+# ---- @warn below are old just definitions
 
 # Helper functions
 
@@ -72,26 +90,6 @@ _print_error message:
   #!/usr/bin/env bash
   echo ''
   echo "{{warn-prefix}}{{message}}"
-
-# Starts default or explicitly named services
-start +services=(defaultServices):
-  #!/usr/bin/env bash
-  echo ''
-  if [[ "{{debug-mode}}" == 'true' ]]; then
-    echo "{{indent2x}}as-daemon:        '{{as-daemon}}'"
-    echo "{{indent2x}}services:         '{{services}}'"
-    echo "{{indent2x}}defaultServices:  '{{defaultServices}}'"
-    echo ''
-  fi
-
-  {{dry-run-script}}
-
-  services="{{services}}"
-  if [[ "{{as-daemon}}" == 'false' ]]; then
-     {{move-to-docker-dir}} docker-compose {{docker-compose-project-name}} up ${services}
-  else
-     {{move-to-docker-dir}} docker-compose {{docker-compose-project-name}} up -d ${services}
-  fi
 
 # Stops all or explicitly named services
 stop +services='':

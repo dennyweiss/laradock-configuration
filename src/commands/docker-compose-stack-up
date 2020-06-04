@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+if [[ -z "${COMPOSE_SERVICE_STACK}" ]]; then
+  echo ''
+  echo "ERROR: 'COMPOSE_SERVICE_STACK' has to be defined, but is missing"
+  echo ''
+  exit 1
+fi
+
+docker-compose up -d ${COMPOSE_SERVICE_STACK}
