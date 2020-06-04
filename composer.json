@@ -9,5 +9,13 @@
             "email": "denny@fa-weiss.eu"
         }
     ],
-    "require": {}
+    "repositories": [
+      {
+        "type": "vcs",
+        "url": "git@github.com:dennyweiss/laradock.git"
+      }
+    ],
+    "require": {
+      "dennyweiss/laradock": "dev-master"
+    }
 }
