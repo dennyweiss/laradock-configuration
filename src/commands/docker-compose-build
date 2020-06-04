@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+readonly services=( ${1} )
+readonly services_count=${#services[@]}
+
+if [[ ${services_count} == 0 ]]; then
+  echo -e "\nERROR: please provide at least one service that should be build\n"
+  exit 1 
+fi
+
+for service in "${services[@]}"; do
+  build_command="docker-compose build ${service}"
+  eval "${build_command}"
+done

@@ -14,7 +14,6 @@ docker-path :=  env_var_or_default('DC_PATH', '.docker')
 move-to-docker-dir := 'cd ' + docker-path + '&& '
 docker-compose-project-name := "--project-name ${DC_PROJECT_NAME}"
 
-as-daemon := "true"
 defaultServices := 'nginx mysql workspace'
 container-user := env_var_or_default('DC_USER', 'laradock')
 set-container-user-parameter-string := "--user='" + container-user + "'"
@@ -38,8 +37,7 @@ config-package-commands-path-prefix := config-package-path-prefix + '/src/comman
 
 # Show available commands
 default:
-  #!/usr/bin/env bash
-  just --list
+  @just --list
 
 alias help := default
 
@@ -62,6 +60,14 @@ alias stackup := stack-up
 # Stop running services
 stop +parameters_and_or_services='':
   @docker-compose stop {{parameters_and_or_services}}
+
+# Build one or multiple services at a time
+build +services='':
+  @'{{config-package-commands-path-prefix}}/docker-compose-build' {{services}}
+
+# Shorthand for service stop, build & up again
+rebuild service as-daemon='true':
+  @'{{config-package-commands-path-prefix}}/docker-compose-rebuild' {{service}} {{as-daemon}}
 
 # ---- @warn below are old just definitions
 
@@ -120,12 +126,6 @@ status:
   #!/usr/bin/env bash
   echo ''
   {{move-to-docker-dir}} docker-compose {{docker-compose-project-name}} ps
-
-# Builds (prepares) one or more services
-build +services:
-  #!/usr/bin/env bash
-  echo ''
-  {{move-to-docker-dir}} docker-compose {{docker-compose-project-name}} build --no-cache "{{services}}"
 
 # Destroys all sevices, networks and volumes use with caution
 destroy:
