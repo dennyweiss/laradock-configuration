@@ -48,7 +48,7 @@ services:
           - INSTALL_GEARMAN=${WORKSPACE_INSTALL_GEARMAN:-false}
           - INSTALL_PHPREDIS=${WORKSPACE_INSTALL_PHPREDIS:-false}
           - INSTALL_MSSQL=${WORKSPACE_INSTALL_MSSQL:-false}
-          - NVM_NODEJS_ORG_MIRROR=${WORKSPACE_NVM_NODEJS_ORG_MIRROR:-true}
+          - NVM_NODEJS_ORG_MIRROR=${WORKSPACE_NVM_NODEJS_ORG_MIRROR:-}
           - INSTALL_NODE=${WORKSPACE_INSTALL_NODE:-true}
           - NPM_REGISTRY=${WORKSPACE_NPM_REGISTRY:-}
           - INSTALL_PNPM=${WORKSPACE_INSTALL_PNPM:-}
@@ -97,7 +97,7 @@ services:
           - PUID=${WORKSPACE_PUID}
           - PGID=${WORKSPACE_PGID}
           - CHROME_DRIVER_VERSION=${WORKSPACE_CHROME_DRIVER_VERSION:-2.42}
-          - NODE_VERSION=${WORKSPACE_NODE_VERSION:-12.16}
+          - NODE_VERSION=${WORKSPACE_NODE_VERSION:-v12.18.0}
           - YARN_VERSION=${WORKSPACE_YARN_VERSION:-false}
           - DRUSH_VERSION=${WORKSPACE_DRUSH_VERSION:-false}
           - AST_VERSION=${WORKSPACE_AST_VERSION:-false}
@@ -112,6 +112,7 @@ services:
           - http_proxy
           - https_proxy
           - no_proxy
+      image: eteamacr.azurecr.io/e-team/wordpress/workspace:20200605
       volumes:
         - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}${APP_CODE_CONTAINER_FLAG}
         - docker-in-docker:/certs/client
@@ -206,6 +207,7 @@ services:
           - http_proxy
           - https_proxy
           - no_proxy
+      image: eteamacr.azurecr.io/e-team/wordpress/php-fpm:20200605
       volumes:
         - ./php-fpm/php${PHP_VERSION}.ini:/usr/local/etc/php/php.ini
         - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}${APP_CODE_CONTAINER_FLAG}
@@ -255,6 +257,7 @@ services:
           - INSTALL_REDIS=${PHP_WORKER_INSTALL_REDIS:-false}
           - PUID=${PHP_WORKER_PUID}
           - PGID=${PHP_WORKER_PGID}
+      image: eteamacr.azurecr.io/e-team/wordpress/php-worker:20200605
       volumes:
         - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}${APP_CODE_CONTAINER_FLAG}
         - ./php-worker/supervisord.d:/etc/supervisord.d
@@ -276,6 +279,7 @@ services:
           - http_proxy
           - https_proxy
           - no_proxy
+      image: eteamacr.azurecr.io/e-team/wordpress/nginx:20200605
       volumes:
         - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}${APP_CODE_CONTAINER_FLAG}
         - ${NGINX_HOST_LOG_PATH}:/var/log/nginx
@@ -304,6 +308,7 @@ services:
         - MYSQL_PASSWORD=${MYSQL_PASSWORD:-secret}
         - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-root}
         - TZ=${WORKSPACE_TIMEZONE:-UTC}
+      image: eteamacr.azurecr.io/e-team/wordpress/mysql:20200605
       volumes:
         - ${DATA_PATH_HOST}/mysql:/var/lib/mysql
         - ${MYSQL_ENTRYPOINT_INITDB:-./mysql/docker-entrypoint-initdb.d}:/docker-entrypoint-initdb.d
@@ -315,6 +320,7 @@ services:
 ### Mailhog ################################################
     mailhog:
       build: "${COMPOSE_PACKAGE_PATH}/mailhog"
+      image: eteamacr.azurecr.io/e-team/wordpress/mailhog:20200605
       ports:
         - "1025:1025"
         - "8025:8025"
