@@ -39,11 +39,9 @@ default:
 
 alias help := default
 
-# Call docker-compose in '.docker' directory
-dc +arguments='':
-  #!/usr/bin/env bash
-
-  {{move-to-docker-dir}} docker-compose {{arguments}}
+# docker-compose shorthand
+dc +parameters_and_or_services:
+  @docker-compose {{parameters_and_or_services}}
 
 # Helper functions
 
