@@ -1,0 +1,4 @@
+h5bp/server-configs-nginx:
+  commit: 611ed75
+  tag: v3.1.0
+  url: https://github.com/h5bp/server-configs-nginx/tree/3.1.0

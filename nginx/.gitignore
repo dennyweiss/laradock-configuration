@@ -1,0 +1,3 @@
+ssl/*
+!*.encrypted
+!_wildcard.dev.*
