@@ -69,6 +69,10 @@ build +services='':
 rebuild service as-daemon='true':
   @'{{config-package-commands-path-prefix}}/docker-compose-rebuild' {{service}} {{as-daemon}}
 
+# Remove all Services, Networks & Volumes
+destroy +parameters='':
+  @'{{config-package-commands-path-prefix}}/docker-compose-destroy' {{parameters}}
+
 # ---- @warn below are old just definitions
 
 # Helper functions
@@ -126,32 +130,6 @@ status:
   #!/usr/bin/env bash
   echo ''
   {{move-to-docker-dir}} docker-compose {{docker-compose-project-name}} ps
-
-# Destroys all sevices, networks and volumes use with caution
-destroy:
-  #!/usr/bin/env bash
-  echo ''
-  echo "{{task-prefix}}This receipt will destroy:"
-  echo "{{indent2x}}  - services"
-  echo "{{indent2x}}  - networks"
-  echo "{{indent2x}}  - volumes"
-  echo "{{indent2x}}of this project (see status)"
-  echo ''
-  read -p "Do you really wish to DESTROY this docker app? (yes/no)? " answer
-  case "${answer}" in
-      yes)
-          echo "{{indent2x}}Yes"
-      ;;
-      *)
-          echo "{{indent2x}}No"
-          exit 0
-      ;;
-  esac
-
-  {{dry-run-script}}
-
-  echo ''
-  {{move-to-docker-dir}} docker-compose {{docker-compose-project-name}} down
 
 # Imports SQL DB from file and applies correct 'WP_HOME'
 db-import file:
