@@ -81,6 +81,12 @@ exec +parameters_and_or_services:
 run +parameters_and_or_services:
   @docker-compose run {{parameters_and_or_services}}
 
+# Show status created services
+ps +parameters='':
+  @docker-compose ps {{parameters}}
+
+alias status := ps
+
 # ---- @warn below are old just definitions
 
 # Helper functions
@@ -112,32 +118,6 @@ _print_error message:
   #!/usr/bin/env bash
   echo ''
   echo "{{warn-prefix}}{{message}}"
-
-# Run commands inside running container
-exec service +subcommands='':
-  #!/usr/bin/env bash
-  echo ''
-  echo "{{task-prefix}}exec (running) services"
-  service="{{service}}"
-  subcommands="{{subcommands}}"
-
-  if [[ "{{debug-mode}}" == 'true' ]]; then
-    echo ''
-    echo "{{indent2x}}set-container-user-parameter-string: '{{set-container-user-parameter-string}}'"
-    echo "{{indent2x}}service:            '{{service}}'"
-    echo "{{indent2x}}subcommands:"
-    echo "{{indent2x}}  '${subcommands}'"
-    echo ''
-  fi
-
-  {{dry-run-script}}
-  {{move-to-docker-dir}} docker-compose {{docker-compose-project-name}} exec {{set-container-user-parameter-string}} {{service}} {{subcommands}}
-
-# Shows status of current projects services (e.g. running, stopped...)
-status:
-  #!/usr/bin/env bash
-  echo ''
-  {{move-to-docker-dir}} docker-compose {{docker-compose-project-name}} ps
 
 # @info source files from "$(dirname "${0}")/../library/ddd-lib"
 # Imports SQL DB from file and applies correct 'WP_HOME'
