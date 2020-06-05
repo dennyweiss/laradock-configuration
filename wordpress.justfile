@@ -87,10 +87,27 @@ ps +parameters='':
 
 alias status := ps
 
-# ---- @warn below are old just definitions
+# Show docker-compose config
+config-show +parameters='':
+  @docker-compose config {{parameters}}
 
-# Helper functions
+# Show service names that are defined in docker-compose
+services-list:
+  @docker-compose config --services
 
+# Reload environment variables
+reload-environment:  
+  @direnv allow .envrc
+
+alias re := reload-environment
+
+# Show logs of running service
+log service='':
+  @docker-compose logs --follow {{service}}
+
+# @warn below are old definitions
+
+# << // ---- @warn _* helper commands below are potentially obsolete 
 _print_title message:
   #!/usr/bin/env bash
   echo ''
@@ -118,6 +135,7 @@ _print_error message:
   #!/usr/bin/env bash
   echo ''
   echo "{{warn-prefix}}{{message}}"
+# >> // ---- @warn
 
 # @info source files from "$(dirname "${0}")/../library/ddd-lib"
 # Imports SQL DB from file and applies correct 'WP_HOME'
