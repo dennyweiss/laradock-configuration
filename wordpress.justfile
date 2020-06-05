@@ -113,6 +113,9 @@ images-prefetch +images:
 registry action:
   @'{{config-package-commands-path-prefix}}/docker-registry' {{action}}
 
+# Encrypt or decrypt file
+vault action file:
+
 # @warn below are old definitions
 
 # << // ---- @warn _* helper commands below are potentially obsolete 

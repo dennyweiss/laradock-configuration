@@ -8,8 +8,7 @@ readonly FORCE="${FORCE:-false}"
 
 # //////////////////////////////////////////////////////////////////////////////
 # Define globals
-
-source "$(dirname "${0}")/../library/colors.sh"
+source "$(dirname "$(realpath -m "${0}")")/library/colors.sh"
 
 link_file() {
   local elements=(${1//::/ })
@@ -61,5 +60,6 @@ while read -r file; do link_file "${file}" ; done < <(
   vendor/dennyweiss/laradock-configuration/.env.dc.wordpress::.env.dc
   vendor/dennyweiss/laradock-configuration/docker-compose.wordpress.yml::docker-compose.yml
   vendor/dennyweiss/laradock-configuration/.envrc.default::.envrc
+  vendor/dennyweiss/laradock-configuration/requirements.txt::requirements.txt
 DEPENDENCIES
 )

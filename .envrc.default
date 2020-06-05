@@ -1,10 +1,15 @@
+# // Create python venv when python is present on system
+if which python &>/dev/null || which python3 &>/dev/null; then 
+  layout python-venv python3.7
+fi 
+
 # //////////////////////////////////////////////////////////////////////////////
 # Define globals
 c_reset=$(echo -en '\033[0m')
 c_red=$(echo -en '\033[00;31m')
 c_lgreen=$(echo -en '\033[01;33m')
 
-custom_bin_path="$(expand_path './.bin')"
+custom_bin_path="$(expand_path './bin')"
 PATH_add "${custom_bin_path}"
 
 # //////////////////////////////////////////////////////////////////////////////
