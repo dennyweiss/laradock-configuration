@@ -73,6 +73,14 @@ rebuild service as-daemon='true':
 destroy +parameters='':
   @'{{config-package-commands-path-prefix}}/docker-compose-destroy' {{parameters}}
 
+# Execute commands inside running service
+exec +parameters_and_or_services:
+  @docker-compose exec {{parameters_and_or_services}}
+
+# Run a service without establishing networks
+run +parameters_and_or_services:
+  @docker-compose run {{parameters_and_or_services}}
+
 # ---- @warn below are old just definitions
 
 # Helper functions
@@ -131,6 +139,7 @@ status:
   echo ''
   {{move-to-docker-dir}} docker-compose {{docker-compose-project-name}} ps
 
+# @info source files from "$(dirname "${0}")/../library/ddd-lib"
 # Imports SQL DB from file and applies correct 'WP_HOME'
 db-import file:
   #!/usr/bin/env bash
