@@ -109,6 +109,10 @@ log service='':
 images-prefetch +images: 
   @docker-compose pull {{images}}
 
+# Log into user defined 'USER_DR_URL' docker registry
+registry action:
+  @'{{config-package-commands-path-prefix}}/docker-registry' {{action}}
+
 # @warn below are old definitions
 
 # << // ---- @warn _* helper commands below are potentially obsolete 
