@@ -105,6 +105,10 @@ alias re := reload-environment
 log service='':
   @docker-compose logs --follow {{service}}
 
+# Fetch container images from registries
+images-prefetch +images: 
+  @docker-compose pull {{images}}
+
 # @warn below are old definitions
 
 # << // ---- @warn _* helper commands below are potentially obsolete 
