@@ -115,6 +115,7 @@ registry action:
 
 # Encrypt or decrypt file
 vault action file:
+  @'{{config-package-commands-path-prefix}}/vault' {{action}} {{file}}
 
 # @warn below are old definitions
 
