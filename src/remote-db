@@ -1,0 +1,275 @@
+#!/usr/bin/env bash
+set -e
+set -o pipefail
+
+readonly SCRIPT_PATH="$(dirname "${0}")"
+readonly SCRIPT_NAME="$(basename "${0}")"
+readonly ENVIRONMENT_FILEPATH="$(pwd)/.env"
+
+readonly REMOTE_ENVIRONMENT="${1}"
+readonly ACTION="${2}"
+readonly FILEPATH="${3}"
+readonly ARGS="${@}"
+
+NORMALIZE_DB='true'
+# shellcheck disable=SC2199
+if [[ "${@}" == *'--without-normalize'* ]]; then
+  NORMALIZE_DB='false'
+fi
+
+__USAGE_MESSAGE=$(
+  cat <<-HEREDOC
+  USAGE: ${SCRIPT_NAME} [ENVIRONMENT] [ACTION] [filepath] {--debug} {--dry-run}
+
+  ENVIRONMENT                 staging|production
+
+  ACTION:
+      import                  imports db from file implies filepath
+      normalize               normalize urls in current db
+
+  Global Options:
+      --without-normalize     can only be applied
+      --help                  show usage
+      --debug                 show verbose messages
+      --dry-run               don\'t execute fetch
+
+  examples:
+
+      - import sql dump '.db/staging_20191218-113731.sql' without normalize
+
+        \$ ${SCRIPT_NAME} staging import .db/staging_20191218-113731.sql --without-normalize
+
+      - import and normalize sql dump '.db/staging_20191218-113731.sql'
+        and normalize urls for staging (target) environment
+
+        \$ ${SCRIPT_NAME} staging import .db/staging_20191218-113731.sql
+
+      - normalize staging db
+
+        \$ ${SCRIPT_NAME} staging normalize
+
+HEREDOC
+)
+
+source "${SCRIPT_PATH}/library/default-options.sh"
+source "${SCRIPT_PATH}/library/print.sh"
+source "${SCRIPT_PATH}/library/logging.sh"
+source "${SCRIPT_PATH}/library/helper.sh"
+source "${SCRIPT_PATH}/library/remote-command-composer.sh"
+
+print::title 'Remote DB'
+helper::add_help_option
+l::log_default_options
+
+if ! source "${ENVIRONMENT_FILEPATH}"; then
+  l::log_and_show_usage_and_exit 1 'ERROR' "${ENVIRONMENT_FILEPATH} file missing"
+fi
+
+SSH_BASE_PATH=''
+REMOTE_DB_PATH=''
+REMOTE_ASSETS_PATH=''
+REMOTE_FILES_PATH=''
+REMOTE_URL=''
+REMOTE_PROJECT_PATH=''
+
+helper::initialize_remote_settings "${REMOTE_ENVIRONMENT}"
+readonly REMOTE_BASE_COMMAND="ssh ${REMOTE_URL}"
+
+_copy_db_file_to_remote_task() {
+  local remote_url="${1}"
+  local remote_project_path="${2}"
+  local filepath="${3}"
+  local remote_filepath="$(dirname "${remote_project_path}/${filepath}")"
+
+  print::task "Copy '${filepath}' to '${REMOTE_ENVIRONMENT:-}' environment"
+  local copy_command="scp -pCq ${filepath} ${remote_url}:${remote_filepath}"
+
+  if [[ "${DEBUG:-false}" == 'true' ]]; then
+    print::command "${copy_command}"
+  fi
+
+  if [[ "${DRY_RUN:-false}" == 'true' ]]; then
+    return 0
+  fi
+
+  eval "${copy_command}"
+
+  # shellcheck disable=SC2181
+  if [[ "${?}" != '0' ]]; then
+    echo ''
+    l::log_and_show_usage_and_exit 1 'ERROR' "Failed to copy '${filepath}' to '${REMOTE_ENVIRONMENT:-}' environment"
+  fi
+
+}
+
+_does_remote_file_exist_task() {
+  local remote_base_command="${1}"
+  local remote_project_path="${2}"
+  local filepath="${3}"
+
+  print::task "Check '${filepath}' exists in '${REMOTE_ENVIRONMENT:-}' environment"
+
+  local actions=()
+  actions+=("cd ${remote_project_path}")
+  actions+=("(if [[ ! -f \"${filepath}\" ]]; then exit 1; fi)")
+  local file_exists_command="$(remote_command_composer::compose "${remote_base_command}" "${actions[@]}")"
+
+  if [[ "${DEBUG:-false}" == 'true' ]]; then
+    print::command "${file_exists_command}"
+  fi
+
+  if [[ "${DRY_RUN:-false}" == 'true' ]]; then
+    return 0
+  fi
+
+  eval "${file_exists_command}"
+
+  # shellcheck disable=SC2181
+  if [[ "${?}" != "0" ]]; then
+    echo ''
+    l::log_and_show_usage_and_exit 1 \
+      'ERROR' \
+      "File not found '${remote_project_path}/${sub_filepath}'\n         in '${REMOTE_ENVIRONMENT:-}' environment"
+  fi
+}
+
+_create_db_backup_task() {
+  local remote_url="${1}"
+  local remote_project_path="${2}"
+  local db_dump_command="ssh ${remote_url} 'cd ${REMOTE_PROJECT_PATH};bin/db-dump-for-remote.sh --hide-title --hide-result-banner --hide-backup-output %s;'"
+
+  print::task "Create DB Backup"
+
+  if [[ "${DEBUG:-false}" == 'true' ]]; then
+    helper::string_replace "db_dump_command" "${db_dump_command}" "--debug"
+    print::command "${db_dump_command}"
+  else
+    helper::string_replace "db_dump_command" "${db_dump_command}"
+  fi
+
+  if [[ "${DRY_RUN:-false}" == 'true' ]]; then
+    return 0
+  fi
+
+  eval "${db_dump_command}"
+
+  return ${?}
+}
+
+_import_db_file_into_server_task() {
+  local remote_base_command="${1}"
+  local remote_project_path="${2}"
+  local filepath="${3}"
+
+  print::task "Import '${filepath}' into '${REMOTE_ENVIRONMENT:-}' db server"
+
+  local actions=()
+  actions+=("cd ${remote_project_path}")
+  actions+=("wp db import ${filepath}")
+  local import_db_command="$(remote_command_composer::compose "${remote_base_command}" "${actions[@]}")"
+
+  if [[ "${DEBUG:-false}" == 'true' ]]; then
+    print::command "${import_db_command}"
+  fi
+
+  if [[ "${DRY_RUN:-false}" == 'true' ]]; then
+    return 0
+  fi
+
+  eval "${import_db_command}"
+
+  return ${?}
+}
+
+_normalize_db_task() {
+  local remote_base_command="${1}"
+  local remote_project_path="${2}"
+  local normalization_hint="${3}"
+  local search="${4}"
+  local replacement="${5}"
+
+  print::command "Replace '${normalization_hint}'\n      '${search}' > '${replacement}'"
+
+  local action=()
+  actions+=("cd ${remote_project_path}")
+  actions+=("wp search-replace \"${search}\" \"${replacement}\" --report-changed-only --skip-columns=guid")
+
+  if [[ "${DRY_RUN}" == 'true' ]]; then
+    action="${action} --dry-run"
+  fi
+
+  local normalize_command="$(remote_command_composer::compose "${remote_base_command}" "${actions[@]}")"
+
+  if [[ "${DEBUG:-false}" == 'true' ]]; then
+    print::command ">> ${normalize_command}"
+  fi
+
+  unset actions
+}
+
+main::import_action() {
+  local remote_url="${REMOTE_URL}"
+  local remote_project_path="${REMOTE_PROJECT_PATH}"
+  local remote_base_command="${REMOTE_BASE_COMMAND}"
+  local filepath="${FILEPATH}"
+
+  _copy_db_file_to_remote_task "${remote_url}" "${remote_project_path}" "${filepath}"
+  _does_remote_file_exist_task "${remote_base_command}" "${remote_project_path}" "${filepath}"
+  _create_db_backup_task "${remote_url}" "${remote_project_path}"
+  _import_db_file_into_server_task "${remote_base_command}" "${remote_project_path}" "${filepath}"
+
+  if [[ "${NORMALIZE_DB}" == 'true' ]]; then
+    main::normalize_action
+  fi
+}
+
+main::normalize_action() {
+  local remote_environment="${REMOTE_ENVIRONMENT}"
+  local remote_base_command="${REMOTE_BASE_COMMAND}"
+  local remote_project_path="${REMOTE_PROJECT_PATH}"
+  local environments=('development' 'staging' 'production')
+  local wp_homes=("${WP_HOME_DEVELOPMENT}" "${WP_HOME_STAGING}" "${WP_HOME_PRODUCTION}")
+
+  local index="$(helper::get_index "${remote_environment}" environments)"
+  local replacement=$(helper::get_element "${index}" wp_homes)
+
+  print::task 'Normalize DB'
+  for index in "${!wp_homes[@]}"; do
+    local search="${wp_homes[${index}]}"
+
+    if [[ "${search}" == "${replacement}" ]]; then
+      if [[ "${DEBUG:-false}" == 'true' ]]; then
+        echo ''
+        l::log 'INFO' "Skip normalisation for \n   '${search}' == '${replacement}'"
+      fi
+      continue
+    fi
+
+    # shellcheck disable=SC1019
+    if [[ -z "${search}" ]] || [[ -z "${replacement}" ]]; then
+      _log_and_show_usage_and_exit 1 'ERROR' "search and replacement cannot be empty"
+    fi
+
+    _normalize_db_task \
+      "${remote_base_command}" \
+      "${remote_project_path}" \
+      "$(helper::get_element "${index}" environments) > ${remote_environment}" \
+      "${search}" "${replacement}"
+  done
+
+}
+
+case "${ACTION}" in
+
+import)
+  main::import_action
+  ;;
+
+normalize)
+  main::normalize_action
+  ;;
+*)
+  l::log_and_show_usage_and_exit 1 'ERROR' "${ACTION} not supported. Use are [import|normalize]."
+  ;;
+
+esac

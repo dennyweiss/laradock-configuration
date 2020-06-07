@@ -120,20 +120,16 @@ xdebug action='status':
 
 # Fetch db, assets & files from remote environment
 fetch-from +parameters=('--help'): 
-  #!/usr/bin/env bash
-  bin/fetch-from {{parameters}}
+  @'{{config-package-path-prefix}}/src/fetch-from' {{parameters}}
 
 # Publish db, assets & files to remote environment
 publish-to +parameters=('--help'):
-  #!/usr/bin/env bash
-  bin/publish-to {{parameters}}
+  @'{{config-package-path-prefix}}/src/publish-to' {{parameters}}
 
 # Import and normalize db in remote environment
 remote-db +parameters=('--help'):
-  #!/usr/bin/env bash
-  bin/remote-db {{parameters}}
+  @'{{config-package-path-prefix}}/src/remote-db' {{parameters}}
 
 # Clear remote cache
 cache-clear-remote +parameters=('--help'):
-  #!/usr/bin/env bash
-  bin/cache-clear {{parameters}}
+  @'{{config-package-path-prefix}}/src/cache-clear' {{parameters}}

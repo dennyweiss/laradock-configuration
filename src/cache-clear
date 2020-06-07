@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+set -e
+set -o pipefail
+
+readonly SCRIPT_PATH="$(dirname "${0}")"
+readonly SCRIPT_NAME="$(basename "${0}")"
+readonly ENVIRONMENT_FILEPATH="$(pwd)/.env"
+
+readonly REMOTE_ENVIRONMENT="${1}"
+readonly REMOTE_CACHE_PATH='web/app/cache/et'
+readonly ARGS="${@}"
+
+__USAGE_MESSAGE=$(
+  cat <<-HEREDOC
+  USAGE: ${SCRIPT_NAME} [ENVIRONMENT] {--debug} {--dry-run}
+
+  ENVIRONMENT                 staging|production
+
+  Global Options:
+      --help                  show usage
+      --debug                 show verbose messages
+      --dry-run               don\'t execute fetch
+
+HEREDOC
+)
+
+source "${SCRIPT_PATH}/library/default-options.sh"
+source "${SCRIPT_PATH}/library/print.sh"
+source "${SCRIPT_PATH}/library/logging.sh"
+source "${SCRIPT_PATH}/library/helper.sh"
+source "${SCRIPT_PATH}/library/remote-command-composer.sh"
+
+print::title 'Clear Cache for remote'
+helper::add_help_option
+l::log_default_options
+
+if ! source "${ENVIRONMENT_FILEPATH}"; then
+  l::log_and_show_usage_and_exit 1 'ERROR' "${ENVIRONMENT_FILEPATH} file missing"
+fi
+
+SSH_BASE_PATH=''
+REMOTE_DB_PATH=''
+REMOTE_ASSETS_PATH=''
+REMOTE_FILES_PATH=''
+REMOTE_URL=''
+REMOTE_PROJECT_PATH=''
+
+helper::initialize_remote_settings "${REMOTE_ENVIRONMENT}"
+readonly REMOTE_BASE_COMMAND="ssh ${REMOTE_URL}"
+
+_remove_cache_dir_task() {
+  local remote_base_command="${1}"
+  local remote_project_path="${2}"
+  local cache_path="${3}"
+
+  print::task "Check whether '${cache_path}' exists in '${REMOTE_ENVIRONMENT:-}' environment"
+
+  local actions=()
+  actions+=("cd ${remote_project_path}")
+  actions+=("composer run-script post-install-cmd")
+  local remove_cache_command="$(remote_command_composer::compose "${remote_base_command}" "${actions[@]}")"
+  if [[ "${DEBUG:-false}" == 'true' ]]; then
+    print::command "${remove_cache_command}"
+  fi
+
+  if [[ "${DRY_RUN:-false}" == 'true' ]]; then
+    return 0
+  fi
+
+  eval "${remove_cache_command}"
+
+  # shellcheck disable=SC2181
+  if [[ "${?}" != "0" ]]; then
+    echo ''
+    l::log_and_show_usage_and_exit 1 'ERROR' "Removing cache failed"
+    return 1
+  fi
+
+}
+
+_remove_cache_dir_task "${REMOTE_BASE_COMMAND}" "${REMOTE_PROJECT_PATH}" "${REMOTE_CACHE_PATH}"
