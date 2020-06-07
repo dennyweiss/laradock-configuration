@@ -132,6 +132,10 @@ npm +subcommands='':
 bash +subcommands='':
   @docker-compose exec --user="${COMPOSE_USER:-laradock}" workspace bash {{subcommands}}
 
+# Imports SQL DB from file and applies correct 'WP_HOME' or exports SQL dump to file
+db action filepath='':
+  @'{{config-package-commands-path-prefix}}/docker-wordpress-db' {{action}} {{filepath}}
+
 # @warn below are old definitions
 
 # << // ---- @warn _* helper commands below are potentially obsolete 
@@ -163,89 +167,6 @@ _print_error message:
   echo ''
   echo "{{warn-prefix}}{{message}}"
 # >> // ---- @warn
-
-# Imports SQL DB from file and applies correct 'WP_HOME'
-db-import file:
-  #!/usr/bin/env bash
-  echo ''
-  file="{{file}}"
-  echo "{{task-prefix}}Import DB from '${file}'"
-
-  replacement="${WP_HOME}"
-  source_wp_homes=( "${WP_HOME_DEVELOPMENT}" "${WP_HOME_STAGING}" "${WP_HOME_PRODUCTION}" )
-
-  if [[ "{{debug-mode}}" == 'true' ]]; then
-    echo ''
-    echo "{{indent2x}}dry-run:          '{{dry-run}}'"
-    echo "{{indent2x}}file:             '${file}'"
-    echo "{{indent2x}}replacement:      '${replacement}'"
-    echo "{{indent2x}}source_wp_homes:"
-    for search in "${source_wp_homes[@]}"; do
-      echo "{{indent2x}}                  - '${search}'"
-    done
-    echo ''
-  fi
-
-  if [[ ! -f "${file}" ]]; then
-    echo ''
-    echo "{{warn-prefix}}SQL File '${file}' not found but required"
-    echo ''
-    exit 1
-  fi
-
-  {{move-to-docker-dir}}
-  if [[ "{{dry-run}}" == 'false' ]]; then
-    echo ''
-    echo "{{indent2x}} > Importing DB"
-    result=0
-    docker-compose {{docker-compose-project-name}} exec {{default-user}} workspace wp db import "${file}"
-    echo ''
-    if [[ "${result}" != "0" ]]; then
-      echo "{{warn-prefix}}Importing '${file}' failed"
-      echo ''
-      exit 1
-    fi
-  else
-    echo ''
-    echo "{{indent2x}} > (skipped) Importing DB"
-    echo ''
-  fi
-
-  for search in "${source_wp_homes[@]}"; do
-    isrunningdry=''
-    if [[ "{{dry-run}}" == 'true' ]]; then
-      isrunningdry='(skipped) '
-    fi
-
-    echo "{{indent2x}} > ${isrunningdry}Url replacement"
-    echo "{{indent2x}}   search:      '${search}'"
-    echo "{{indent2x}}   replacement: '${replacement}'"
-    echo ''
-
-    result=0
-    if [[ "{{dry-run}}" != 'false' ]]; then
-      docker-compose {{docker-compose-project-name}} exec {{default-user}} workspace wp search-replace \
-        "${search}" \
-        "${replacement}" \
-        --report-changed-only \
-        --skip-columns=guid \
-        --dry-run
-    else
-      docker-compose {{docker-compose-project-name}} exec {{default-user}} workspace wp search-replace \
-        "${search}" \
-        "${replacement}" \
-        --report-changed-only \
-        --skip-columns=guid
-    fi
-
-    if [[ "${result}" != "0" ]]; then
-      echo "{{warn-prefix}}Url replacement failed"
-      echo ''
-      exit 1
-    fi
-
-    echo ''
-  done
 
 # Exports SQL DB to file
 db-export file=default-db-export-filepath:

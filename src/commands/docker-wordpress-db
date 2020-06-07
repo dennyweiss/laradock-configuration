@@ -1,0 +1,102 @@
+#!/usr/bin/env bash
+
+set -e
+set -o pipefail
+
+readonly DEBUG="${DEBUG:-false}"
+readonly DRY_RUN="${DRY_RUN:-false}"
+
+readonly action="${1:-false}"
+readonly filepath="${2:-false}"
+
+source "$(dirname "${0}")/../library/colors.sh"
+
+import_action() {
+  local file="${1}"
+  local replacement="${WP_HOME}"
+  local source_wp_homes=( "${WP_HOME_DEVELOPMENT}" "${WP_HOME_STAGING}" "${WP_HOME_PRODUCTION}" )
+
+  echo -e "INFO:  Import DB from '${file}'"
+
+  if [[ "${DEBUG}" == 'true' ]]; then
+    echo -e "INFO:  DRY_RUN:          '${DRY_RUN}'"
+    echo -e "INFO:  file:             '${file}'"
+    echo -e "INFO:  replacement:      '${replacement}'"
+    echo -e "INFO:  source_wp_homes:"
+    for search in "${source_wp_homes[@]}"; do
+      echo -e "\t- '${search}'"
+    done
+    echo
+  fi
+
+  if [[ ! -f "${file}" ]]; then
+    echo -en "${c_red}"
+    echo -e "ERROR: SQL File '${file}' not found but required${c_reset}"
+    exit 1
+  fi
+
+  import_db_command="docker-compose exec --user=${COMPOSE_USER:-laradock} workspace wp db import ${file}"
+  if [[ "${DRY_RUN}" == 'false' ]]; then
+    echo -e "INFO > Importing DB"
+    eval "${import_db_command}"
+    if [[ "${?}" != "0" ]]; then
+      echo -en "${c_red}"
+      echo -e "Importing '${file}' failed${c_reset}"
+      exit 1
+    fi
+  else
+    echo -e "INFO:  (skipped) Importing DB"
+    echo -e "       '${import_db_command}'"
+  fi
+
+  for search in "${source_wp_homes[@]}"; do
+    isrunningdry=''
+    if [[ "${DRY_RUN}" == 'true' ]]; then
+      isrunningdry='(skipped) '
+    fi
+
+    echo -e "INFO:  > ${isrunningdry}Url replacement"
+    echo -e "\tsearch:      '${search}'"
+    echo -e "\treplacement: '${replacement}'"
+
+    result=0
+    replace_command="docker-compose exec --user=${COMPOSE_USER:-laradock} workspace wp "
+    replace_command="${replace_command} search-replace ${search} ${replacement} "
+    replace_command="${replace_command} --report-changed-only --skip-columns=guid"
+
+    if [[ "${DRY_RUN}" != 'true' ]]; then
+      replace_command="${replace_command} --dry-run"
+    fi
+    
+    eval "${replace_command}"
+    if [[ "${?}" != "0" ]]; then
+      echo -en "${c_red}"
+      echo -e "ERROR: Url replacement failed${c_reset}"
+      exit 1
+    fi
+
+    echo ''
+  done
+
+}
+
+export_action() {
+  echo 'export'
+}
+
+case "${action}" in
+  import)
+    import_action "${filepath}" 
+    ;;
+  export)
+    export_action "${filepath}" 
+    ;;
+  *)
+    echo -en "${c_red}"
+    echo -e  "ERROR: action '${action}' not supported${c_reset}"
+    exit 1
+    ;;
+esac
+
+
+
