@@ -14,7 +14,6 @@ docker-path :=  env_var_or_default('DC_PATH', '.docker')
 move-to-docker-dir := 'cd ' + docker-path + '&& '
 docker-compose-project-name := "--project-name ${DC_PROJECT_NAME}"
 
-defaultServices := 'nginx mysql workspace'
 container-user := env_var_or_default('DC_USER', 'laradock')
 set-container-user-parameter-string := "--user='" + container-user + "'"
 default-user := set-container-user-parameter-string
@@ -46,7 +45,7 @@ dc +parameters_and_or_services:
   @docker-compose {{parameters_and_or_services}}
 
 # Start one or more services
-up +parameters_and_or_services:
+up +parameters_and_or_services='':
   @docker-compose up {{ parameters_and_or_services }}
 
 alias start := up
@@ -116,6 +115,22 @@ registry action:
 # Encrypt or decrypt file
 vault action file:
   @'{{config-package-commands-path-prefix}}/vault' {{action}} {{file}}
+
+# Calls composer with parameters inside 'workspace' service
+composer +subcommands='':
+  @docker-compose exec --user="${COMPOSE_USER:-laradock}" workspace composer {{subcommands}}
+
+# Calls wp-cli with parameters inside 'workspace' service
+wp +subcommands='':
+  @docker-compose exec --user="${COMPOSE_USER:-laradock}" workspace wp {{subcommands}}
+
+# Calls npm with parameters inside 'workspace' service defaults to themedir
+npm +subcommands='':
+  @'{{config-package-commands-path-prefix}}/docker-compose-exec-npm' {{subcommands}}
+
+# Opens bash console inside workspace container
+bash +subcommands='':
+  @docker-compose exec --user="${COMPOSE_USER:-laradock}" workspace bash {{subcommands}}
 
 # @warn below are old definitions
 
@@ -282,81 +297,6 @@ db-export file=default-db-export-filepath:
     echo ''
     exit 1
   fi
-
-# Calls composer with parameters inside 'workspace' service
-composer +subcommands='':
-  #!/usr/bin/env bash
-  echo ''
-  echo "{{task-prefix}}composer inside workspace"
-
-  subcommands="{{subcommands}}"
-
-  if [[ "{{debug-mode}}" == 'true' ]]; then
-    echo ''
-    echo "{{indent2x}}subcommands:"
-    echo "{{indent2x}}  '${subcommands}'"
-    echo ''
-  fi
-
-  {{dry-run-script}}
-  {{move-to-docker-dir}} docker-compose {{docker-compose-project-name}} exec {{default-user}} workspace composer ${subcommands}
-
-# Calls wp-cli with parameters inside 'workspace' service
-wp +parameters='':
-  #!/usr/bin/env bash
-  echo ''
-  echo "{{task-prefix}}wp-cli inside workspace"
-
-  parameters="{{parameters}}"
-
-  if [[ "{{debug-mode}}" == 'true' ]]; then
-    echo ''
-    echo "{{indent2x}}parameters:"
-    echo "{{indent2x}}  '${parameters}'"
-    echo ''
-  fi
-
-  {{dry-run-script}}
-  {{move-to-docker-dir}} docker-compose {{docker-compose-project-name}} exec {{default-user}} workspace wp ${parameters}
-
-# Calls npm with parameters inside 'workspace' service defaults to themedir
-npm +subcommands='':
-  #!/usr/bin/env bash
-  echo ''
-
-  projectroot="{{root}}"
-  subcommands="{{subcommands}}"
-  themedir="{{themedir}}"
-
-  if [[ "${projectroot}" == 'true' ]]; then
-    echo "{{task-prefix}}npm inside project root"
-  else
-    echo "{{task-prefix}}npm inside theme '${themedir}'"
-  fi
-
-  if [[ "{{debug-mode}}" == 'true' ]]; then
-    echo ''
-    echo "{{indent2x}}projectroot:    '${projectroot}'"
-    echo "{{indent2x}}themedir:       '${themedir}'"
-    echo "{{indent2x}}subcommands:"
-    echo "{{indent2x}}  '${subcommands}'"
-    echo ''
-  fi
-
-  {{dry-run-script}}
-  if [[ "${projectroot}" == 'true' ]]; then
-    {{move-to-docker-dir}} docker-compose {{docker-compose-project-name}} exec {{default-user}} workspace \
-      npm ${subcommands}
-  else
-    {{move-to-docker-dir}} docker-compose {{docker-compose-project-name}} exec {{default-user}} workspace \
-      npm --prefix "${themedir}" ${subcommands}
-  fi
-
-# Opens bash console inside workspace container
-bash:
-  #!/usr/bin/env bash
-  echo ''
-  {{move-to-docker-dir}} docker-compose {{docker-compose-project-name}} exec {{default-user}} workspace bash
 
 # Fetches project dependencies (composer for php and npm for theme packages)
 fetch:

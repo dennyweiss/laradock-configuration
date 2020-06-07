@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+theme_directory="web/app/themes/${WP_ACTIVE_THEME:-project-theme}"
+
+evaluated_location="--prefix ${theme_directory}"
+
+if [[ "${NPM_ROOT:-false}" == 'true' ]];then
+  evaluated_location=''
+  echo "INFO:  Run npm in project root"
+fi
+
+npm_command="docker-compose exec --user=${COMPOSE_USER:-laradock} workspace npm ${evaluated_location} ${@}"
+
+if [[ "${DEBUG:-false}" == 'true' ]]; then
+  echo -e "INFO:  Composed npm command"
+  echo -e "       '${npm_command}'"
+  echo
+fi
+
+eval "${npm_command}"
