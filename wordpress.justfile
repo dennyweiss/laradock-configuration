@@ -1,29 +1,6 @@
-# add check| for required main project vars
-check_dc_project_name := `if [[ -f '.env' && -z "${DC_PROJECT_NAME}" ]]; then exit 1; fi `
-check_active_theme := `if [[ -f '.env' && -z "${WP_ACTIVE_THEME}" ]]; then exit 1; fi `
-check_env_dev := `if [[ -f '.env' && -z "${WP_HOME_DEVELOPMENT}" ]]; then exit 1; fi `
-check_env_stage := `if [[ -f '.env' && -z "${WP_HOME_STAGING}" ]]; then exit 1; fi `
-check_env_prod := `if [[ -f '.env' && -z "${WP_HOME_PRODUCTION}" ]]; then exit 1; fi `
-
-debug-mode := "false"
-dry-run := 'false'
-dry-run-script := 'if [[ ' + dry-run + ' == "true" ]]; then echo -e "\n!!! dry-run - stop execution!!!\n"; exit 0; fi'
-
 # make docker-path overridable in case of supporting addtional project roots
 docker-path :=  env_var_or_default('DC_PATH', '.docker')
 move-to-docker-dir := 'cd ' + docker-path + '&& '
-docker-compose-project-name := "--project-name ${DC_PROJECT_NAME}"
-
-container-user := env_var_or_default('DC_USER', 'laradock')
-set-container-user-parameter-string := "--user='" + container-user + "'"
-default-user := set-container-user-parameter-string
-default-db-export-filename := "${WP_ENV}" + "_" + `date "+%Y%m%d-%H%M%S"` + '.sql'
-default-db-export-filepath := '.db' + "/" + default-db-export-filename
-force := "false"
-themedir := 'web/app/themes' + "/" + "${WP_ACTIVE_THEME}"
-root := 'false'
-current_environment := "${WP_ENV-development}"
-projectNamePlaceholder := '%%%_PROJECT_NAME_%%%'
 
 indent := "  "
 indent2x := indent + indent
@@ -136,39 +113,7 @@ bash +subcommands='':
 db action filepath='':
   @'{{config-package-commands-path-prefix}}/docker-wordpress-db' {{action}} {{filepath}}
 
-# @warn below are old definitions
-
-# << // ---- @warn _* helper commands below are potentially obsolete 
-_print_title message:
-  #!/usr/bin/env bash
-  echo ''
-  echo "{{task-prefix}}{{message}}"
-
-_print_task_title message:
-  #!/usr/bin/env bash
-  echo ''
-  echo "{{indent2x}} > {{message}}"
-
-_print_task_description message:
-  #!/usr/bin/env bash
-  echo "{{indent2x}}   {{message}}"
-
-_print_progress_result message:
-  #!/usr/bin/env bash
-  echo "{{indent2x}}{{indent}} => {{message}}"
-
-_print_ok_end message:
-  #!/usr/bin/env bash
-  echo ''
-  echo "=>{{indent}}{{message}}"
-
-_print_error message:
-  #!/usr/bin/env bash
-  echo ''
-  echo "{{warn-prefix}}{{message}}"
-# >> // ---- @warn
-
-å# Calls actions [start|stop|status] on xdebug
+# Calls actions [start|stop|status] on xdebug
 xdebug action='status':
   #!/usr/bin/env bash
   action="{{action}}"
