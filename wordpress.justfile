@@ -8,6 +8,7 @@ task-prefix := '>>' + indent
 warn-prefix := indent2x + 'WARN: '
 
 ## @info new variables
+package-path-prefix := 'vendor/dennyweiss/laradock'
 config-package-path-prefix := 'vendor/dennyweiss/laradock-configuration'
 config-package-commands-path-prefix := config-package-path-prefix + '/src/commands'
 
@@ -115,18 +116,7 @@ db action filepath='':
 
 # Calls actions [start|stop|status] on xdebug
 xdebug action='status':
-  #!/usr/bin/env bash
-  action="{{action}}"
-
-  if [[ "${action}" == 'start' || "${action}" == 'stop' || "${action}" == 'status' ]]; then
-    {{move-to-docker-dir}} ./php-fpm/xdebug "${action}"
-    exit 0
-  fi
-
-  echo ''
-  echo "{{warn-prefix}}Action '${action}' is not supported" 
-  echo ''
-  exit 1
+  @'{{package-path-prefix}}/php-fpm/xdebug' {{action}}
 
 # Fetch db, assets & files from remote environment
 fetch-from +parameters=('--help'): 
