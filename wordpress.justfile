@@ -168,57 +168,7 @@ _print_error message:
   echo "{{warn-prefix}}{{message}}"
 # >> // ---- @warn
 
-# Exports SQL DB to file
-db-export file=default-db-export-filepath:
-  #!/usr/bin/env bash
-  echo ''
-  filepath="{{file}}"
-  directorypath="$(dirname "${filepath}")"
-  echo "{{task-prefix}}Export DB to '${filepath}'"
-
-  if [[ "{{debug-mode}}" == 'true' ]]; then
-    echo ''
-    echo "{{indent2x}}filepath:       '${filepath}'"
-    echo "{{indent2x}}directorypath:  '${directorypath}'"
-    echo ''
-  fi
-
-  if [[ ! -d "${directorypath}" && "{{force}}" == "false" ]]; then
-    echo ''
-    echo "{{warn-prefix}}SQL File dump directory '${directorypath}' not found but required"
-    echo ''
-    exit 1
-  fi
-
-  if [[ ! -d "${directorypath}" ]]; then
-    mkdir -p "${directorypath}"
-    if [[ "${?}" != "0" ]]; then
-      echo ''
-      echo "{{warn-prefix}}Directory for SQL dump could not be created"
-      echo ''
-      exit 1
-    fi
-  fi
-
-  if [[ -f "${filepath}" && "{{force}}" == 'false' ]]; then
-    echo ''
-    echo "{{warn-prefix}}SQL File '${file}' does already exists use 'force=true' option to overide"
-    echo ''
-    exit 1
-  fi
-
-  {{dry-run-script}}
-  {{move-to-docker-dir}} docker-compose {{docker-compose-project-name}} exec {{default-user}} workspace wp db export \
-    "${filepath}" \
-    --add-drop-table
-
-  if [[ "${?}" != "0" ]]; then
-    echo "{{warn-prefix}}DB export failed"
-    echo ''
-    exit 1
-  fi
-
-# Calls actions [start|stop|status] on xdebug
+å# Calls actions [start|stop|status] on xdebug
 xdebug action='status':
   #!/usr/bin/env bash
   action="{{action}}"
