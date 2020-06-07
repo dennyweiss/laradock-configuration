@@ -1,0 +1,151 @@
+#!/usr/bin/env bash
+
+set -e
+set -o pipefail
+
+readonly DEBUG="${DEBUG:-false}"
+readonly DRY_RUN="${DRY_RUN:-false}"
+readonly FORCE="${FORCE:-false}"
+
+readonly action="${1:-false}"
+filepath="${2}"
+
+source "$(dirname "${0}")/../library/colors.sh"
+
+import_action() {
+  local file="${1}"
+  local replacement="${WP_HOME}"
+  local source_wp_homes=( "${WP_HOME_DEVELOPMENT}" "${WP_HOME_STAGING}" "${WP_HOME_PRODUCTION}" )
+
+  echo -e "INFO:  Import DB from '${file}'"
+
+  if [[ "${DEBUG}" == 'true' ]]; then
+    echo -e "INFO:  DRY_RUN:          '${DRY_RUN}'"
+    echo -e "INFO:  file:             '${file}'"
+    echo -e "INFO:  replacement:      '${replacement}'"
+    echo -e "INFO:  source_wp_homes:"
+    for search in "${source_wp_homes[@]}"; do
+      echo -e "\t- '${search}'"
+    done
+    echo
+  fi
+
+  if [[ ! -f "${file}" ]]; then
+    echo -en "${c_red}"
+    echo -e "ERROR: SQL File '${file}' not found but required${c_reset}"
+    exit 1
+  fi
+
+  import_db_command="docker-compose exec --user=${COMPOSE_USER:-laradock} workspace wp db import ${file}"
+  if [[ "${DRY_RUN}" == 'false' ]]; then
+    echo -e "INFO > Importing DB"
+    eval "${import_db_command}"
+    if [[ "${?}" != "0" ]]; then
+      echo -en "${c_red}"
+      echo -e "ERROR: Importing '${file}' failed${c_reset}"
+      exit 1
+    fi
+  else
+    echo -e "INFO:  (skipped) Importing DB"
+    echo -e "\t'${import_db_command}'"
+  fi
+
+  for search in "${source_wp_homes[@]}"; do
+    isrunningdry=''
+    if [[ "${DRY_RUN}" == 'true' ]]; then
+      isrunningdry='(skipped) '
+    fi
+
+    echo -e "INFO:  > ${isrunningdry}Url replacement"
+    echo -e "\tsearch:      '${search}'"
+    echo -e "\treplacement: '${replacement}'"
+
+    replace_command="docker-compose exec --user=${COMPOSE_USER:-laradock} workspace wp "
+    replace_command="${replace_command} search-replace ${search} ${replacement} "
+    replace_command="${replace_command} --report-changed-only --skip-columns=guid"
+
+    if [[ "${DRY_RUN}" != 'true' ]]; then
+      replace_command="${replace_command} --dry-run"
+    fi
+    
+    eval "${replace_command}"
+    if [[ "${?}" != "0" ]]; then
+      echo -en "${c_red}"
+      echo -e "ERROR: Url replacement failed${c_reset}"
+      exit 1
+    fi
+
+    echo
+  done
+}
+
+export_action() {
+  local default_export_filename="${WP_ENV}_$(date "+%Y%m%d-%H%M%S").sql"
+  local default_export_filepath=".db/${default_export_filename}"
+
+  local file="${1:-$default_export_filepath}"
+  local export_directory="$(dirname "${file}")"
+  
+  echo "INFO:  Export DB to '${file}'"
+
+  if [[ "${DEBUG}" == 'true' ]]; then
+    echo -e "INFO:  DRY_RUN:           '${DRY_RUN}'"
+    echo -e "INFO:  file:              '${file}'"
+    echo -e "INFO:  export_directory:  '${export_directory}'"
+  fi
+
+  if [[ ! -d "${export_directory}" && "${FORCE}" == "false" ]]; then
+    echo -en "${c_red}"
+    echo -e "ERROR: SQL File dump directory '${export_directory}' not found but required${c_reset}"
+    exit 1
+  fi
+
+  if [[ ! -d "${export_directory}" ]]; then
+    mkdir -p "${export_directory}"
+    if [[ "${?}" != "0" ]]; then
+      echo -en "${c_red}"
+      echo -e "ERROR: Directory for SQL dump could not be created${c_reset}"
+      exit 1
+    fi
+  fi
+
+  if [[ -f "${file}" && "${FORCE}" == 'false' ]]; then
+    echo -en "${c_red}"
+    echo -e "ERROR: SQL File '${file}' does already exists use 'force=true' option to overide${c_reset}"
+    exit 1
+  fi
+
+  local export_command="docker-compose exec --user=${COMPOSE_USER:-laradock} workspace wp db export "
+  local export_command="${export_command} ${file} --add-drop-table"
+  
+  if [[ "${DRY_RUN}" == 'true' ]]; then
+    echo -e "INFO: (skipped Exporting DB)"
+    echo -e "\t'${export_command}'"
+    exit 1
+  fi
+
+  eval "${export_command}"
+  if [[ "${?}" != "0" ]]; then
+    echo -en "${c_red}"
+    echo -e "ERROR: DB export failed${c_reset}"
+    exit 1
+  fi
+
+}
+
+case "${action}" in
+  import)
+    import_action "${filepath}" 
+    ;;
+  export)
+    export_action "${filepath}" 
+    ;;
+  *)
+    echo -en "${c_red}"
+    echo -e  "ERROR: action '${action}' not supported${c_reset}"
+    exit 1
+    ;;
+esac
+
+
+

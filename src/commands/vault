@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+
+set -e
+set -o pipefail
+
+readonly action="${1:-false}"
+readonly filepath="$(realpath "${2}")"
+readonly VAULT_PASS_FILE="$(realpath '.vault-pass')"
+
+if ! which 'ansible-vault' &>/dev/null; then
+  echo -en "${c_red}"
+  echo -e  ">> ERROR: 'ansible-vault' is missing please install it${c_reset}"
+  exit 1
+fi
+
+if [[ -z "${filepath}" ]] || [[ ! -f "${filepath}" ]]; then
+  echo -en "${c_red}"
+  echo -e  ">> ERROR: provided filepath '${filepath}' not found${c_reset}"
+  exit 1
+fi
+
+if [[ ! -f "${VAULT_PASS_FILE}" ]]; then
+  echo -en "${c_red}"
+  echo -e  ">> ERROR: 'VAULT_PASS_FILE' '${VAULT_PASS_FILE}' not found${c_reset}"
+  exit 1
+fi
+
+_resolve_decrypt_target() {
+  local encrypted_file="${1}"
+  local filename="$(basename "${encrypted_file}")"
+  filename="$(echo "${filename}" | sed 's/\.encrypted//g')"
+  local target_file="$(dirname "${encrypted_file}")/${filename}"
+
+  echo "${target_file}"
+}
+
+encrypt_file() {
+  local source_file="${1}"
+  local target_file="${source_file}.encrypted"
+
+  ansible-vault encrypt \
+    --output="${target_file}" \
+    --vault-password-file="${VAULT_PASS_FILE}" \
+    "${source_file}"
+  
+  if [[ "${?}" != "0" ]]; then
+    echo -en "${c_red}"
+    echo -e  ">> ERROR: encryption failed${c_reset}"
+    exit 1
+  fi
+}
+
+decrypt_file() {
+  local source_file="${1}"
+  local target_file="$(_resolve_decrypt_target "${source_file}")"
+
+  ansible-vault decrypt \
+    --output="${target_file}" \
+    --vault-password-file="${VAULT_PASS_FILE}" \
+    "${source_file}"
+
+  if [[ "${?}" != "0" ]]; then
+    echo -en "${c_red}"
+    echo -e  ">> ERROR: dencryption failed${c_reset}"
+    exit 1
+  fi
+}
+
+case "${action}" in
+  encrypt)
+    encrypt_file "${filepath}"
+    ;;
+  decrypt)
+    decrypt_file "${filepath}"
+    ;;
+  *)
+    echo -en "${c_red}"
+    echo -e  ">> ERROR: action '${action}' not supported${c_reset}"
+    exit 1
+    ;;
+esac

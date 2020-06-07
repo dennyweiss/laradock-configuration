@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+set -e
+set -o pipefail
+
+readonly SCRIPT_PATH="$(dirname "${0}")"
+readonly SCRIPT_NAME="$(basename "${0}")"
+readonly ENVIRONMENT_FILEPATH="$(pwd)/.env"
+
+readonly REMOTE_ENVIRONMENT="${1}"
+readonly ARGS="${@}"
+
+__USAGE_MESSAGE=$(
+  cat <<-HEREDOC
+  USAGE: ${SCRIPT_NAME} [staging|production] {--db} {--assets} {--files} {--debug} {--dry-run}
+
+  Parameters:
+      staging|production      supported environments for publishing
+
+
+  Options:
+      --db|--assets|--files   mark explicitly which data to publish
+                              when ommited *all* is applied
+      --help                  show usage
+      --debug                 show verbose messages
+      --dry-run               don\'t execute fetch
+HEREDOC
+)
+
+source "${SCRIPT_PATH}/library/default-options.sh"
+source "${SCRIPT_PATH}/library/print.sh"
+source "${SCRIPT_PATH}/library/logging.sh"
+source "${SCRIPT_PATH}/library/helper.sh"
+source "${SCRIPT_PATH}/library/remote-command-composer.sh"
+
+print::title 'Deploy db dumps, files/uploads and compiled assets'
+helper::add_help_option
+l::log_default_options
+
+if ! source "${ENVIRONMENT_FILEPATH}"; then
+  l::log_and_show_usage_and_exit 1 'ERROR' "${ENVIRONMENT_FILEPATH} file missing"
+fi
+
+SSH_BASE_PATH=''
+REMOTE_DB_PATH=''
+REMOTE_ASSETS_PATH=''
+REMOTE_FILES_PATH=''
+REMOTE_URL=''
+REMOTE_PROJECT_PATH=''
+
+helper::initialize_remote_settings "${REMOTE_ENVIRONMENT}"
+readonly REMOTE_BASE_COMMAND="ssh ${REMOTE_URL}"
+
+db_command="rsync -vuzrS \"${DB_DEVELOPMENT}\" \"${SSH_BASE_PATH}/${REMOTE_DB_PATH}\" --checksum --include '*.sql' --exclude '*' --exclude '.DS_Store'"
+assets_command="rsync -vuzrS \"${ASSETS_DEVELOPMENT}\" \"${SSH_BASE_PATH}/${REMOTE_ASSETS_PATH}\" --checksum --exclude '.DS_Store'"
+files_command="rsync -vuzrS \"${FILES_DEVELOPMENT}\" \"${SSH_BASE_PATH}/${REMOTE_FILES_PATH}\" --checksum --exclude 'cache' --exclude '.DS_Store'"
+
+if [[ "${DRY_RUN}" == 'true' ]]; then
+  db_command="${db_command} --dry-run"
+  assets_command="${assets_command} --dry-run"
+  files_command="${files_command} --dry-run"
+fi
+
+all_data_selected="true"
+# shellcheck disable=SC2199
+if [[ "${@}" == *'--db'* ]] || [[ "${@}" == *'--assets'* ]] || [[ "${@}" == *'--files'* ]]; then
+  all_data_selected="false"
+fi
+
+# shellcheck disable=SC2199
+if [[ "${all_data_selected}" == "true" ]] || [[ "${@}" == *'--db'* ]]; then
+  print::task 'Publish DB dumps'
+  if [[ "${DEBUG}" == "true" ]]; then
+    print::command "${db_command}"
+  fi
+  eval "${db_command}"
+  echo ''
+fi
+
+# shellcheck disable=SC2199
+if [[ "${all_data_selected}" == "true" ]] || [[ "${@}" == *'--assets'* ]]; then
+  print::task 'Publish compiled assets'
+  if [[ "${DEBUG}" == "true" ]]; then
+    print::command "${assets_command}"
+  fi
+  eval "${assets_command}"
+  echo ''
+fi
+
+# shellcheck disable=SC2199
+if [[ "${all_data_selected}" == "true" ]] || [[ "${@}" == *'--files'* ]]; then
+  print::task 'Publish Files'
+  if [[ "${DEBUG}" == "true" ]]; then
+    print::command "${files_command}"
+  fi
+  eval "${files_command}"
+  echo ''
+fi

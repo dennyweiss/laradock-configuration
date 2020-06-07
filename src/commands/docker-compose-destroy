@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+if [[ "${COMPLETELY:-false}" == 'true' ]]; then
+  echo
+  echo "INFO:  Docker PRUNE SYSTEM"
+  echo 
+  docker-compose down
+  docker system prune --all --volumes --force
+  exit 0
+fi
+
+echo ''
+echo "DESTROY: services, networks & volumes"
+echo "         which results in data loss (depends on service)"
+echo ''
+read -p "Do you really wish to DESTROY all? (yes/no)? " answer
+case "${answer}" in
+  yes|y)
+      echo "  Yes"
+  ;;
+  *)
+      echo "  No"
+      exit 0
+  ;;
+esac
+
+docker-compose down ${1}

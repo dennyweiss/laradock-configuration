@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+readonly service="${1}"
+readonly as_daemon="${2:-true}"
+
+if [[ "${COMPOSE_PROJECT_NAME:-false}" == 'false' ]]; then
+  echo ''
+  echo "ERROR: 'COMPOSE_PROJECT_NAME' has to be defined, but is missing"
+  echo ''
+  exit 1
+fi
+
+should_restart='false'
+service_id=$(docker container ls --filter name="${COMPOSE_PROJECT_NAME}_${service}" -q); 
+
+if [[ -n "${service_id}" ]]; then 
+  should_restart='true'
+fi
+
+if [[ "${should_restart}" == 'true' ]]; then
+  docker-compose stop "${service}"
+fi
+
+docker-compose build "${service}"
+
+daemon_flag=''
+if [[ "${as_daemon}" == 'true' ]]; then
+  daemon_flag='-d'
+fi
+
+if [[ "${should_restart}" == 'true' ]]; then
+  docker-compose up "${daemon_flag}" "${service}"
+fi

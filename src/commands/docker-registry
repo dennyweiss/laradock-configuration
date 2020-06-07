@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+
+set -e
+set -o pipefail
+
+readonly action="${1:-false}"
+
+source "$(dirname "${0}")/../library/colors.sh"
+
+if [[ "${USER_DR_URL:-false}" == 'false' ]]; then
+  echo -en "${c_red}"
+  echo -e  "ERROR: 'USER_DR_URL' variable missing but required${c_reset}"
+  exit 1
+fi
+
+docker_registry_login() {
+  if [[ "${USER_DR_SP_APP_ID:-false}" == 'false' ]]; then
+    echo -en "${c_red}"
+    echo -e  "ERROR: 'USER_DR_SP_APP_ID' variable missing but required${c_reset}"
+    exit 1
+  fi
+
+  if [[ "${USER_DR_SP_APP_PASSWORD:-false}" == 'false' ]]; then
+    echo -en "${c_red}"
+    echo -e  "ERROR: 'USER_DR_SP_APP_PASSWORD' variable missing but required${c_reset}"
+    exit 1
+  fi
+
+  echo "${USER_DR_SP_APP_PASSWORD}" | docker login "${USER_DR_URL}" --username "${USER_DR_SP_APP_ID}" --password-stdin
+  if [[ "${?}" != "0" ]]; then
+    echo -en "${c_red}"
+    echo -e  "ERROR: Registry '${USER_DR_URL}' login failed${c_reset}"
+    exit 1
+  fi
+}
+
+docker_registry_logout() {
+  docker logout "${USER_DR_URL}"
+  if [[ "${?}" != "0" ]]; then
+    echo -en "${c_red}"
+    echo -e  "ERROR: Registry '${USER_DR_URL}' logout failed${c_reset}"
+    exit 1
+  fi
+}
+
+case "${action}" in
+  login)
+    docker_registry_login
+    ;;
+  logout)
+    docker_registry_logout
+    ;;
+  *)
+    echo -en "${c_red}"
+    echo -e  "ERROR: action '${action}' not supported${c_reset}"
+    exit 1
+    ;;
+esac
