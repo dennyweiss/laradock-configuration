@@ -50,10 +50,10 @@ link_file() {
       exit 1
   fi
 
-}  
+}
 
 echo "Link laradock-configuration files to project root"
-echo 
+echo
 
 while read -r file; do link_file "${file}" ; done < <(
   cat <<DEPENDENCIES
@@ -61,5 +61,6 @@ while read -r file; do link_file "${file}" ; done < <(
   vendor/dennyweiss/laradock-configuration/docker-compose.wordpress.yml::docker-compose.yml
   vendor/dennyweiss/laradock-configuration/.envrc.default::.envrc
   vendor/dennyweiss/laradock-configuration/requirements.txt::requirements.txt
+  vendor/dennyweiss/laradock-configuration/wordpress.justfile::justfile
 DEPENDENCIES
 )
