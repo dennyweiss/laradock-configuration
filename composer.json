@@ -16,9 +16,14 @@
       {
         "type": "vcs",
         "url": "git@github.com:dennyweiss/laradock.git"
+      },
+      {
+        "type": "vcs",
+        "url": "git@github.com:dennyweiss/script-resolver.git"
       }
     ],
     "require": {
-      "dennyweiss/laradock": "dev-master"
+      "dennyweiss/laradock": "dev-master",
+      "dennyweiss/script-resolver": "dev-master"
     }
 }
