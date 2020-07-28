@@ -73,7 +73,7 @@ services-list:
   @docker-compose config --services
 
 # Reload environment variables
-reload-environment:  
+reload-environment:
   @direnv allow .envrc
 
 alias re := reload-environment
@@ -83,7 +83,7 @@ log service='':
   @docker-compose logs --follow {{service}}
 
 # Fetch container images from registries
-images-prefetch +images: 
+images-prefetch +images:
   @docker-compose pull {{images}}
 
 # Log into user defined 'USER_DR_URL' docker registry
