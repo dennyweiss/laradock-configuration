@@ -106,6 +106,10 @@ wp +subcommands='':
 npm +subcommands='':
   @'{{config-package-commands-path-prefix}}/docker-compose-exec-npm' {{subcommands}}
 
+# Calls npm with parameters inside 'workspace' service defaults to themedir
+yarn +subcommands='':
+  @'{{config-package-commands-path-prefix}}/docker-compose-exec-yarn' {{subcommands}}
+
 # Opens bash console inside workspace container
 bash +subcommands='':
   @docker-compose exec --user="${COMPOSE_USER:-laradock}" workspace bash {{subcommands}}
