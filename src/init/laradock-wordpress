@@ -52,6 +52,7 @@ link_file() {
 
 }
 
+echo
 echo "Initialize wordpress project for laradock usage"
 echo
 
@@ -70,3 +71,36 @@ while read -r file; do link_file "${file}" ; done < <(
   vendor/dennyweiss/laradock-configuration/wordpress.justfile::justfile
 DEPENDENCIES
 )
+
+
+enable_local_composer_auth() {
+  link_file 'vendor/dennyweiss/laradock-configuration/docker-compose.composer-auth.yml::docker-compose.composer-auth.yml'
+
+  local manual_step="$(cat <<-MS
+  COMPOSE_FILE="\${COMPOSE_FILE}:docker-compose.composer-auth.yml"
+MS
+)"
+
+  echo -e "${c_lgreen}"
+  echo -e  ">> INFO:${c_reset}  Add 'docker-compose.composer-auth.yml' file registration to './.env.user', through:"
+  echo
+  echo -e  "        ${manual_step}"
+}
+
+if [[ "${QUIET:-true}" == 'true' ]]; then
+  exit 0
+fi
+
+echo "${c_lyellow}"
+read -p "Do you wish to enable local composer auth?${c_reset} (yes/no)? " answer
+echo
+case "${answer}" in
+  yes|y)
+    echo -en "${c_lgreen}"
+    echo -e  ">> INFO:${c_reset}  Link local composer auth files"
+    enable_local_composer_auth
+  ;;
+  *)
+    exit 0
+  ;;
+esac
