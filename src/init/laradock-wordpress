@@ -8,7 +8,7 @@ readonly FORCE="${FORCE:-false}"
 
 # //////////////////////////////////////////////////////////////////////////////
 # Define globals
-source "$(dirname "$(realpath -m "${0}")")/library/colors.sh"
+source "$(dirname "$(dirname "$(realpath -m "${0}")")")/library/colors.sh"
 
 link_file() {
   local elements=(${1//::/ })
@@ -25,9 +25,9 @@ link_file() {
   fi
 
   if [[ -f "${absolute_target_file}" ]] && [[ "${FORCE}" != 'true' ]]; then
-      echo -e  ">> WARN:${c_reset}  Target file '${absolute_target_file}' exists, resolved from:"
-      echo -e  "          '${1}'"
-      return 0
+    echo -e  ">> WARN:${c_reset}  Target file '${absolute_target_file}' exists, resolved from:"
+    echo -e  "          '${1}'"
+    return 0
   fi
 
   if [[ -f "${absolute_target_file}" ]] && [[ "${FORCE}" == 'true' ]]; then
@@ -40,20 +40,26 @@ link_file() {
   eval "${link_command}"
 
   if [[ "${?}" == "0" ]]; then
-      echo -en "${c_lgreen}"
-      echo -e  ">> INFO:${c_reset}  Files are succesful linked"
-      echo -e  "          '${source_file}' ->> '${target_file}'"
+    echo -en "${c_lgreen}"
+    echo -e  ">> INFO:${c_reset}  Files are succesful linked"
+    echo -e  "          '${source_file}' ->> '${target_file}'"
   else
-      echo -en "${c_red}"
-      echo -e  ">> ERROR: Linking failed${c_reset}"
-      echo -e  "          '${link_command}'\n"
-      exit 1
+    echo -en "${c_red}"
+    echo -e  ">> ERROR: Linking failed${c_reset}"
+    echo -e  "          '${link_command}'\n"
+    exit 1
   fi
 
 }
 
-echo "Link laradock-configuration files to project root"
+echo "Initialize wordpress project for laradock usage"
 echo
+
+if [[ "${1}" != 'init' ]]; then
+  echo -en "${c_red}"
+  echo -e  ">> ERROR: Script Action missing or invalid"
+  exit 1
+fi
 
 while read -r file; do link_file "${file}" ; done < <(
   cat <<DEPENDENCIES

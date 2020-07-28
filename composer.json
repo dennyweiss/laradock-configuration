@@ -10,7 +10,7 @@
         }
     ],
     "bin": [
-      "src/laradock-configuration-wordpress-init"
+      "src/init/laradock-wordpress"
     ],
     "repositories": [
       {
