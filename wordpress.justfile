@@ -8,8 +8,8 @@ task-prefix := '>>' + indent
 warn-prefix := indent2x + 'WARN: '
 
 ## @info new variables
-package-path-prefix := 'vendor/dennyweiss/laradock'
-config-package-path-prefix := 'vendor/dennyweiss/laradock-configuration'
+package-path-prefix := 'vendor/dennyweiss/laradock' # @todo use '$COMPOSE_LARADOCK_PACKAGE_PATH'
+config-package-path-prefix := 'vendor/dennyweiss/laradock-configuration' # @todo use '$COMPOSE_LARADOCK_CONFIGURATION_PACKAGE_PATH'
 config-package-commands-path-prefix := config-package-path-prefix + '/src/commands'
 
 # Show available commands
@@ -73,7 +73,7 @@ services-list:
   @docker-compose config --services
 
 # Reload environment variables
-reload-environment:  
+reload-environment:
   @direnv allow .envrc
 
 alias re := reload-environment
@@ -83,7 +83,7 @@ log service='':
   @docker-compose logs --follow {{service}}
 
 # Fetch container images from registries
-images-prefetch +images: 
+images-prefetch +images:
   @docker-compose pull {{images}}
 
 # Log into user defined 'USER_DR_URL' docker registry
@@ -119,7 +119,7 @@ xdebug action='status':
   @'{{package-path-prefix}}/php-fpm/xdebug' {{action}}
 
 # Fetch db, assets & files from remote environment
-fetch-from +parameters=('--help'): 
+fetch-from +parameters=('--help'):
   @'{{config-package-path-prefix}}/src/fetch-from' {{parameters}}
 
 # Publish db, assets & files to remote environment

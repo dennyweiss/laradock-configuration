@@ -1,7 +1,9 @@
+echo
+
 # // Create python venv when python is present on system
-if which python &>/dev/null || which python3 &>/dev/null; then 
+if which python &>/dev/null || which python3 &>/dev/null; then
   layout python-venv python3.7
-fi 
+fi
 
 # //////////////////////////////////////////////////////////////////////////////
 # Define globals
@@ -50,11 +52,11 @@ done
 if [[ ${#loaded_env_files[@]} == 0 ]]; then
     echo -en "${c_red}"
     echo -e  ">> ERROR: Could not load any of following environment files:${c_reset}"
-    echo -e  "          [${supported_docker_env_files[*]}]\n"
+    echo -e  "            [${supported_docker_env_files[*]}]\n"
 else
     echo -en "${c_lgreen}"
     echo -e  ">> INFO:${c_reset}  environment file(s) loaded in the following order:"
-    echo -e  "          [${loaded_env_files[*]}]"
+    echo -e  "            [${loaded_env_files[*]}]"
 fi
 
 # //////////////////////////////////////////////////////////////////////////////
@@ -72,8 +74,8 @@ done
 
 if [[ ${#optional_loaded_env_files[@]} > 0 ]]; then
     echo -en "${c_lgreen}"
-    echo -e  ">> INFO:${c_reset} optional environment file(s) loaded in the following order:"
-    echo -e  "          [${optional_loaded_env_files[*]}]"
+    echo -e  ">> INFO:${c_reset}  optional environment file(s) loaded in the following order:"
+    echo -e  "            [${optional_loaded_env_files[*]}]"
 fi
 
 # //////////////////////////////////////////////////////////////////////////////
@@ -84,18 +86,29 @@ fi
 project_directory_name="$(basename "$(pwd)")"
 if [[ -n "${DC_PROJECT_NAME}" ]]; then
   echo -en "${c_lgreen}"
-  echo -e  ">> INFO:${c_reset} docker-compose project name: '${DC_PROJECT_NAME}', evaluated from '\$DC_PROJECT_NAME'"
+  echo -e  ">> INFO:${c_reset}  resolve project name '${DC_PROJECT_NAME}' from '\$DC_PROJECT_NAME'"
   export COMPOSE_PROJECT_NAME="${DC_PROJECT_NAME}"
-else 
+else
   echo -en "${c_lgreen}"
-  echo -e  ">> INFO:${c_reset} docker-compose project name: '${project_directory_name}', evaluated from 'project dir name'"
+  echo -e  ">> INFO:${c_reset}  resolve project name '${project_directory_name}' from 'project dir name'"
   export COMPOSE_PROJECT_NAME="${project_directory_name}"
 fi
 
 # //////////////////////////////////////////////////////////////////////////////
 # // Define unique docker compose datalocation
-docker_compose_data_location="~/.laradock/data/${COMPOSE_PROJECT_NAME}"
+docker_compose_data_location="~/.laradock/data/${DC_PROJECT_NAME}"
 echo -en "${c_lgreen}"
-echo -e  ">> INFO:${c_reset} docker-compose resolved from 'COMPOSE_PROJECT_NAME' '${COMPOSE_PROJECT_NAME}':"
-echo -e  "          [${docker_compose_data_location}]"
+echo -e  ">> INFO:${c_reset}  derive docker data location from '\DC_PROJECT_NAME' ('${DC_PROJECT_NAME}'):"
+echo -e  "            [${docker_compose_data_location}]"
 export DATA_PATH_HOST="${docker_compose_data_location}"
+
+# //////////////////////////////////////////////////////////////////////////////
+# // Applied docker-compose files
+echo -en "${c_lgreen}"
+echo -e  ">> INFO:${c_reset}  apply compose files, provided through '\$COMPOSE_FILE':"
+echo -e  "            [${COMPOSE_FILE//:/ }]"
+
+# intentionally linebreak
+echo
+
+
