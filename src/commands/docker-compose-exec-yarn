@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+theme_directory="web/app/themes/${WP_ACTIVE_THEME:-project-theme}"
+
+evaluated_location="--cwd ${theme_directory}"
+
+if [[ "${YARN_IN_ROOT:-false}" == 'true' ]];then
+  evaluated_location=''
+  echo "INFO:  Run yarn in project root"
+fi
+
+yarn_command="docker-compose exec --user=${COMPOSE_USER:-laradock} workspace yarn ${evaluated_location} ${@}"
+
+if [[ "${DEBUG:-false}" == 'true' ]]; then
+  echo -e "INFO:  Composed yarn command"
+  echo -e "       '${yarn_command}'"
+  echo
+fi
+
+eval "${yarn_command}"
