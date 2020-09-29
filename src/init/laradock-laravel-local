@@ -1,0 +1,106 @@
+#!/usr/bin/env bash
+
+set -e
+set -o pipefail
+
+readonly PROJECT_ROOT="$(pwd)"
+readonly FORCE="${FORCE:-false}"
+
+# //////////////////////////////////////////////////////////////////////////////
+# Define globals
+source "$(dirname "$(dirname "$(realpath -m "${0}")")")/library/colors.sh"
+
+link_file() {
+  local elements=(${1//::/ })
+  local source_file="${elements[0]}"
+  local absolute_source_file="${PROJECT_ROOT}/${source_file}"
+  local target_file="${elements[1]}"
+  local absolute_target_file="${PROJECT_ROOT}/${target_file}"
+
+  if [[ ! -f "${absolute_source_file}" ]]; then
+    echo -en "${c_red}"
+    echo -e  ">> ERROR: Source file '${absolute_source_file}' not found, resolved from :${c_reset}"
+    echo -e  "          '${1}'"
+    exit 1
+  fi
+
+  if [[ -f "${absolute_target_file}" ]] && [[ "${FORCE}" != 'true' ]]; then
+    echo -e  ">> WARN:${c_reset}  Target file '${absolute_target_file}' exists, resolved from:"
+    echo -e  "          '${1}'"
+    return 0
+  fi
+
+  if [[ -f "${absolute_target_file}" ]] && [[ "${FORCE}" == 'true' ]]; then
+    rm -f "${absolute_target_file}"
+    echo -e  ">> WARN:${c_reset}  Target file '${absolute_target_file}' exists, but was removed"
+  fi
+
+  link_command="ln -s ${source_file} ${target_file}"
+
+  eval "${link_command}"
+
+  if [[ "${?}" == "0" ]]; then
+    echo -en "${c_lgreen}"
+    echo -e  ">> INFO:${c_reset}  Files are succesful linked"
+    echo -e  "          '${source_file}' ->> '${target_file}'"
+  else
+    echo -en "${c_red}"
+    echo -e  ">> ERROR: Linking failed${c_reset}"
+    echo -e  "          '${link_command}'\n"
+    exit 1
+  fi
+
+}
+
+echo
+echo "Initialize wordpress project for laradock usage"
+echo
+
+if [[ "${1}" != 'init' ]]; then
+  echo -en "${c_red}"
+  echo -e  ">> ERROR: Script Action missing or invalid"
+  exit 1
+fi
+
+while read -r file; do link_file "${file}" ; done < <(
+  cat <<DEPENDENCIES
+  vendor/dennyweiss/laradock-configuration/.env.dc.laravel.local::.env.dc
+  vendor/dennyweiss/laradock-configuration/docker-compose.laravel.local.yml::docker-compose.yml
+  vendor/dennyweiss/laradock-configuration/.envrc.default::.envrc
+  vendor/dennyweiss/laradock-configuration/requirements.txt::requirements.txt
+  vendor/dennyweiss/laradock-configuration/laravel.local.justfile::justfile
+DEPENDENCIES
+)
+
+
+enable_local_composer_auth() {
+  link_file 'vendor/dennyweiss/laradock-configuration/docker-compose.composer-auth.yml::docker-compose.composer-auth.yml'
+
+  local manual_step="$(cat <<-MS
+  COMPOSE_FILE="\${COMPOSE_FILE}:docker-compose.composer-auth.yml"
+MS
+)"
+
+  echo -e "${c_lgreen}"
+  echo -e  ">> INFO:${c_reset}  Add 'docker-compose.composer-auth.yml' file registration to './.env.user', through:"
+  echo
+  echo -e  "        ${manual_step}"
+}
+
+if [[ "${QUIET:-true}" == 'true' ]]; then
+  exit 0
+fi
+
+echo "${c_lyellow}"
+read -p "Do you wish to enable local composer auth?${c_reset} (yes/no)? " answer
+echo
+case "${answer}" in
+  yes|y)
+    echo -en "${c_lgreen}"
+    echo -e  ">> INFO:${c_reset}  Link local composer auth files"
+    enable_local_composer_auth
+  ;;
+  *)
+    exit 0
+  ;;
+esac
