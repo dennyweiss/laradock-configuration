@@ -53,7 +53,7 @@ link_file() {
 }
 
 echo
-echo "Initialize wordpress project for laradock usage"
+echo "Initialize semi local laravel project for laradock usage"
 echo
 
 if [[ "${1}" != 'init' ]]; then
