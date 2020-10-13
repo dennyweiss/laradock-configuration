@@ -111,7 +111,7 @@ alias re := reload-environment
 log service='':
   #!/usr/bin/env bash
   service='{{service}}'
-  
+
   case "${service}" in
     php)
       echo 'WARN:  Not Implemented'

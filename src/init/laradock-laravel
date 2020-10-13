@@ -64,11 +64,11 @@ fi
 
 while read -r file; do link_file "${file}" ; done < <(
   cat <<DEPENDENCIES
-  vendor/dennyweiss/laradock-configuration/.env.dc.laravel.local::.env.dc
-  vendor/dennyweiss/laradock-configuration/docker-compose.laravel.local.yml::docker-compose.yml
+  vendor/dennyweiss/laradock-configuration/.env.dc.laravel::.env.dc
+  vendor/dennyweiss/laradock-configuration/docker-compose.laravel.yml::docker-compose.yml
   vendor/dennyweiss/laradock-configuration/.envrc.default::.envrc
   vendor/dennyweiss/laradock-configuration/requirements.txt::requirements.txt
-  vendor/dennyweiss/laradock-configuration/laravel.local.justfile::justfile
+  vendor/dennyweiss/laradock-configuration/laravel.justfile::justfile
 DEPENDENCIES
 )
 
