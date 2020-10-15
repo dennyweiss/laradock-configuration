@@ -1,3 +1,4 @@
+# //    derived from 'vendor/dennyweiss/laradock-configuration/.envrc.default'
 # // Create python venv when python is present on system
 if which python &>/dev/null || which python3 &>/dev/null; then
   layout python-venv python3
@@ -35,46 +36,74 @@ done
 
 # //////////////////////////////////////////////////////////////////////////////
 # Load environment variables
-docker_env_error=0
 supported_docker_env_files=( './.env.dc' './.env.dc.dev' './.env.dc.stage' './.env.dc.prod' )
 loaded_env_files=()
 
 for env_file in "${supported_docker_env_files[@]}"; do
-    expanded_env_file="$(expand_path "${env_file}")"
-    if [[ -f "${expanded_env_file}" ]]; then
-      dotenv "${expanded_env_file}"
-      loaded_env_files+=( "${env_file}" )
-    fi
+  expanded_env_file="$(expand_path "${env_file}")"
+  if [[ -f "${expanded_env_file}" ]]; then
+    dotenv "${expanded_env_file}"
+    loaded_env_files+=( "${env_file}" )
+  fi
 done
 
 if [[ ${#loaded_env_files[@]} == 0 ]]; then
-    echo -en "${c_red}"
-    echo -e  ">> ERROR: Could not load any of following environment files:${c_reset}"
-    echo -e  "            [${supported_docker_env_files[*]}]\n"
+  echo -en "${c_red}"
+  echo -e  ">> ERROR: Could not load any of following environment files:${c_reset}"
+  echo -e  "            [${supported_docker_env_files[*]}]\n"
 else
-    echo -en "${c_lgreen}"
-    echo -e  ">> INFO:${c_reset}  environment file(s) loaded in the following order:"
-    echo -e  "            [${loaded_env_files[*]}]"
+  echo -en "${c_lgreen}"
+  echo -e  ">> INFO:${c_reset}  environment file(s) loaded in the following order:"
+  echo -e  "            [${loaded_env_files[*]}]"
 fi
 
 # //////////////////////////////////////////////////////////////////////////////
 # Load optional environment files: .env, .env.user
-optional_env_files=( './.env' './.env.user' )
+optional_env_files=( './.env' )
 optional_loaded_env_files=()
 
 for optional_env_file in "${optional_env_files[@]}"; do
-    expanded_optional_env_file="$(expand_path "${optional_env_file}")"
-    if [[ -f "${expanded_optional_env_file}" ]]; then
-      dotenv "${expanded_optional_env_file}"
-      optional_loaded_env_files+=( "${expanded_optional_env_file}" )
-    fi
+  expanded_optional_env_file="$(expand_path "${optional_env_file}")"
+  if [[ -f "${expanded_optional_env_file}" ]]; then
+    dotenv "${expanded_optional_env_file}"
+    optional_loaded_env_files+=( "${expanded_optional_env_file}" )
+  fi
 done
 
-if [[ ${#optional_loaded_env_files[@]} > 0 ]]; then
-    echo -en "${c_lgreen}"
-    echo -e  ">> INFO:${c_reset}  optional environment file(s) loaded in the following order:"
-    echo -e  "            [${optional_loaded_env_files[*]}]"
+if [[ ${#optional_loaded_env_files[@]} -gt 0 ]]; then
+  echo -en "${c_lgreen}"
+  echo -e  ">> INFO:${c_reset}  optional environment file(s) loaded in the following order:"
+  echo -e  "            ["
+  for single_env_file in ${optional_loaded_env_files[*]}; do
+    echo -e  "              ${single_env_file}"
+  done
+  echo -e  "            ]"
 fi
+
+# //////////////////////////////////////////////////////////////////////////////
+# Load optional user environment files: .env.user*
+optional_user_env_files=".env.user*"
+optional_loaded_user_env_files=()
+
+for optional_user_env_file in ${optional_user_env_files}; do
+  expanded_optional_user_env_file="$(expand_path "${optional_user_env_file}")"
+
+  if [[ -f "${expanded_optional_user_env_file}" ]]; then
+    dotenv "${expanded_optional_user_env_file}"
+    optional_loaded_user_env_files+=( "${optional_user_env_file}" )
+  fi
+done
+
+if [[ ${#optional_loaded_user_env_files[@]} -gt 0 ]]; then
+  echo -en "${c_lgreen}"
+  echo -e  ">> INFO:${c_reset}  optional user environment file(s) loaded in the following order:"
+  echo -e  "            ["
+  for single_user_env_file in ${optional_loaded_user_env_files[*]}; do
+    echo -e  "              ${single_user_env_file}"
+  done
+  echo -e  "            ]"
+fi
+
 
 # //////////////////////////////////////////////////////////////////////////////
 # // Evaluate docker compose project name
@@ -105,6 +134,28 @@ export DATA_PATH_HOST="${docker_compose_data_location}"
 echo -en "${c_lgreen}"
 echo -e  ">> INFO:${c_reset}  apply compose files, provided through '\$COMPOSE_FILE':"
 echo -e  "            [${COMPOSE_FILE//:/ }]"
+
+# //////////////////////////////////////////////////////////////////////////////
+# // Applied docker-compose files
+echo -en "${c_lgreen}"
+echo -e  ">> INFO:${c_reset}  current service stack provided through '\$COMPOSE_SERVICE_STACK':"
+if [[ "${COMPOSE_SERVICE_STACK_MIXED_WITH_LOCAL:-false}" == 'true' ]]; then
+  echo -e  "          was modified because of '\$COMPOSE_SERVICE_STACK_MIXED_WITH_LOCAL' == '${COMPOSE_SERVICE_STACK_MIXED_WITH_LOCAL}'"
+  COMPOSE_SERVICE_STACK="${COMPOSE_SERVICE_STACK/nginx/}"
+  COMPOSE_SERVICE_STACK="${COMPOSE_SERVICE_STACK/workspace/}"
+  COMPOSE_SERVICE_STACK="${COMPOSE_SERVICE_STACK/php-fpm/}"
+fi
+
+# normalize whitespace in service stack declaration
+COMPOSE_SERVICE_STACK="${COMPOSE_SERVICE_STACK/  / }"
+COMPOSE_SERVICE_STACK="${COMPOSE_SERVICE_STACK/   / }"
+COMPOSE_SERVICE_STACK="${COMPOSE_SERVICE_STACK/    / }"
+COMPOSE_SERVICE_STACK="${COMPOSE_SERVICE_STACK# }"
+COMPOSE_SERVICE_STACK="${COMPOSE_SERVICE_STACK# }"
+COMPOSE_SERVICE_STACK="${COMPOSE_SERVICE_STACK% }"
+COMPOSE_SERVICE_STACK="${COMPOSE_SERVICE_STACK% }"
+export COMPOSE_SERVICE_STACK
+echo -e  "            [${COMPOSE_SERVICE_STACK//:/ }]"
 
 # intentionally linebreak
 echo
