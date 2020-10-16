@@ -128,6 +128,7 @@ services:
         - "${WORKSPACE_VUE_CLI_SERVE_HOST_PORT:-8080}:8080"
         - "${WORKSPACE_VUE_CLI_UI_HOST_PORT:-8000}:8000"
         - "${WORKSPACE_ANGULAR_CLI_SERVE_HOST_PORT:-4200}:4200"
+        - "${WORKSPACE_ARTISAN_SERVE_PORT:-8880}:8880"
       tty: true
       environment:
         - PHP_IDE_CONFIG=${PHP_IDE_CONFIG:-serverName=laradock}
