@@ -91,16 +91,16 @@ MS
 }
 
 enable_local_ssh_configuration() {
-  link_file 'vendor/dennyweiss/laradock-configuration/docker-compose.ssh.local.yml::docker-compose.ssh.local.yml'
+  link_file 'vendor/dennyweiss/laradock-configuration/docker-compose.ssh.user.yml::docker-compose.ssh.user.yml'
 
   local manual_step
   manual_step="$(cat <<-MS
-  COMPOSE_FILE="\${COMPOSE_FILE}:docker-compose.ssh.local.yml"
+  COMPOSE_FILE="\${COMPOSE_FILE}:docker-compose.ssh.user.yml"
 MS
 )"
 
   echo -e "${c_lgreen}"
-  echo -e  ">> INFO:${c_reset}  Add 'docker-compose.ssh.local.yml' file registration to './.env.user', through:"
+  echo -e  ">> INFO:${c_reset}  Add 'docker-compose.ssh.user.yml' file registration to './.env.user', through:"
   echo
   echo -e  "        ${manual_step}"
 }
@@ -126,14 +126,14 @@ case "${answer_composer_auth}" in
 esac
 
 echo ''
-echo "${c_lyellow}Do you wish to inject local ssh configuration into workspace?${c_reset} (yes/no)? "
+echo "${c_lyellow}Do you wish to inject user ssh configuration into workspace?${c_reset} (yes/no)? "
 read -r answer_ssh
 echo
 case "${answer_ssh}" in
   yes|y)
     enable_local_ssh_configuration
     echo -en "${c_lgreen}"
-    echo -e  ">> INFO:${c_reset}  docker-compose.ssh.local.yml linked"
+    echo -e  ">> INFO:${c_reset}  docker-compose.ssh.user.yml linked"
   ;;
   *)
     exit 0
