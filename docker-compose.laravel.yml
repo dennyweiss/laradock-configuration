@@ -3,19 +3,19 @@ version: '3'
 
 networks:
   frontend:
-    driver: ${NETWORKS_DRIVER}
+    driver: ${NETWORKS_DRIVER:-bridge}
   backend:
-    driver: ${NETWORKS_DRIVER}
+    driver: ${NETWORKS_DRIVER:-bridge}
 
 volumes:
   mysql:
-    driver: ${VOLUMES_DRIVER}
+    driver: ${VOLUMES_DRIVER:-local}
   memcached:
-    driver: ${VOLUMES_DRIVER}
+    driver: ${VOLUMES_DRIVER:-local}
   minio:
-    driver: ${VOLUMES_DRIVER}
+    driver: ${VOLUMES_DRIVER:-local}
   docker-in-docker:
-    driver: ${VOLUMES_DRIVER}
+    driver: ${VOLUMES_DRIVER:-local}
 
 services:
 
@@ -120,7 +120,7 @@ services:
         - docker-in-docker:/certs/client
         - ${PHP_WORKER_CONF_PATH_PREFIX}:/etc/supervisord.d
       extra_hosts:
-        - "dockerhost:${DOCKER_HOST_IP}"
+        - "dockerhost:${DOCKER_HOST_IP:-10.0.75.1}"
       ports:
         - "${WORKSPACE_SSH_PORT:-2222}:22"
         - "${WORKSPACE_BROWSERSYNC_HOST_PORT:-3000}:3000"
@@ -130,7 +130,7 @@ services:
         - "${WORKSPACE_ANGULAR_CLI_SERVE_HOST_PORT:-4200}:4200"
       tty: true
       environment:
-        - PHP_IDE_CONFIG=${PHP_IDE_CONFIG}
+        - PHP_IDE_CONFIG=${PHP_IDE_CONFIG:-serverName=laradock}
         - DOCKER_HOST=tcp://docker-in-docker:2376
         - DOCKER_TLS_VERIFY=1
         - DOCKER_TLS_CERTDIR=/certs
@@ -218,9 +218,9 @@ services:
       expose:
         - "9000"
       extra_hosts:
-        - "dockerhost:${DOCKER_HOST_IP}"
+        - "dockerhost:${DOCKER_HOST_IP:-10.0.75.1}"
       environment:
-        - PHP_IDE_CONFIG=${PHP_IDE_CONFIG}
+        - PHP_IDE_CONFIG=${PHP_IDE_CONFIG:-laradock}
         - DOCKER_HOST=tcp://docker-in-docker:2376
         - DOCKER_TLS_VERIFY=1
         - DOCKER_TLS_CERTDIR=/certs
@@ -271,7 +271,7 @@ services:
       depends_on:
         - workspace
       extra_hosts:
-        - "dockerhost:${DOCKER_HOST_IP}"
+        - "dockerhost:${DOCKER_HOST_IP:-10.0.75.1}"
       networks:
         - backend
 
