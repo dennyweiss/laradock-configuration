@@ -8,6 +8,7 @@ readonly FORCE="${FORCE:-false}"
 
 # //////////////////////////////////////////////////////////////////////////////
 # Define globals
+# shellcheck source=/dev/null
 source "$(dirname "$(dirname "$(realpath -m "${0}")")")/library/colors.sh"
 
 link_file() {
@@ -18,6 +19,7 @@ link_file() {
   local absolute_target_file="${PROJECT_ROOT}/${target_file}"
 
   if [[ ! -f "${absolute_source_file}" ]]; then
+    # shellcheck disable=SC2154
     echo -en "${c_red}"
     echo -e  ">> ERROR: Source file '${absolute_source_file}' not found, resolved from :${c_reset}"
     echo -e  "          '${1}'"
@@ -40,6 +42,7 @@ link_file() {
   eval "${link_command}"
 
   if [[ "${?}" == "0" ]]; then
+    # shellcheck disable=SC2154
     echo -en "${c_lgreen}"
     echo -e  ">> INFO:${c_reset}  Files are succesful linked"
     echo -e  "          '${source_file}' ->> '${target_file}'"
@@ -72,17 +75,32 @@ while read -r file; do link_file "${file}" ; done < <(
 DEPENDENCIES
 )
 
+enable_composer_auth() {
+  link_file 'vendor/dennyweiss/laradock-configuration/docker-compose.composer.auth.yml::docker-compose.composer.auth.yml'
 
-enable_local_composer_auth() {
-  link_file 'vendor/dennyweiss/laradock-configuration/docker-compose.composer-auth.yml::docker-compose.composer-auth.yml'
-
-  local manual_step="$(cat <<-MS
-  COMPOSE_FILE="\${COMPOSE_FILE}:docker-compose.composer-auth.yml"
+  local manual_step
+  manual_step="$(cat <<-MS
+  COMPOSE_FILE="\${COMPOSE_FILE}:docker-compose.composer.auth.yml"
 MS
 )"
 
   echo -e "${c_lgreen}"
-  echo -e  ">> INFO:${c_reset}  Add 'docker-compose.composer-auth.yml' file registration to './.env.user', through:"
+  echo -e  ">> INFO:${c_reset}  Add 'docker-compose.composer.auth.yml' file registration to './.env.user', through:"
+  echo
+  echo -e  "        ${manual_step}"
+}
+
+enable_local_ssh_configuration() {
+  link_file 'vendor/dennyweiss/laradock-configuration/docker-compose.ssh.local.yml::docker-compose.ssh.local.yml'
+
+  local manual_step
+  manual_step="$(cat <<-MS
+  COMPOSE_FILE="\${COMPOSE_FILE}:docker-compose.ssh.local.yml"
+MS
+)"
+
+  echo -e "${c_lgreen}"
+  echo -e  ">> INFO:${c_reset}  Add 'docker-compose.ssh.local.yml' file registration to './.env.user', through:"
   echo
   echo -e  "        ${manual_step}"
 }
@@ -91,14 +109,31 @@ if [[ "${QUIET:-true}" == 'true' ]]; then
   exit 0
 fi
 
-echo "${c_lyellow}"
-read -p "Do you wish to enable local composer auth?${c_reset} (yes/no)? " answer
+echo ''
+# shellcheck disable=SC2154
+echo "${c_lyellow}Do you wish to enable usage of local composer.auth.json?${c_reset} (yes/no)? "
+read -r answer_composer_auth
 echo
-case "${answer}" in
+case "${answer_composer_auth}" in
   yes|y)
+    enable_composer_auth
     echo -en "${c_lgreen}"
-    echo -e  ">> INFO:${c_reset}  Link local composer auth files"
-    enable_local_composer_auth
+    echo -e  ">> INFO:${c_reset}  docker-compose.composer.auth.yml linked"
+  ;;
+  *)
+    exit 0
+  ;;
+esac
+
+echo ''
+echo "${c_lyellow}Do you wish to inject local ssh configuration into workspace?${c_reset} (yes/no)? "
+read -r answer_ssh
+echo
+case "${answer_ssh}" in
+  yes|y)
+    enable_local_ssh_configuration
+    echo -en "${c_lgreen}"
+    echo -e  ">> INFO:${c_reset}  docker-compose.ssh.local.yml linked"
   ;;
   *)
     exit 0
