@@ -1,0 +1,350 @@
+# //   derived from `vendor/dennyweiss/laradock-configuration/docker-compose.laravel.yml`
+version: '3'
+
+networks:
+  frontend:
+    driver: ${NETWORKS_DRIVER}
+  backend:
+    driver: ${NETWORKS_DRIVER}
+
+volumes:
+  mysql:
+    driver: ${VOLUMES_DRIVER}
+  memcached:
+    driver: ${VOLUMES_DRIVER}
+  minio:
+    driver: ${VOLUMES_DRIVER}
+  docker-in-docker:
+    driver: ${VOLUMES_DRIVER}
+
+services:
+
+### Workspace Utilities ##################################
+    workspace:
+      build:
+        context: "${COMPOSE_LARADOCK_PACKAGE_PATH}/workspace"
+        args:
+          - CHANGE_SOURCE=${CHANGE_SOURCE:-false}
+          - SHELL_OH_MY_ZSH=${SHELL_OH_MY_ZSH:-false}
+          - UBUNTU_SOURCE=${UBUNTU_SOURCE:-aliyun}
+          - BASE_IMAGE_TAG_PREFIX=${WORKSPACE_BASE_IMAGE_TAG_PREFIX:-latest}
+          - LARADOCK_PHP_VERSION=${PHP_VERSION:-7.4}
+          - LARADOCK_PHALCON_VERSION=${PHALCON_VERSION:-3.4.5}
+          - INSTALL_SUBVERSION=${WORKSPACE_INSTALL_SUBVERSION:-false}
+          - INSTALL_BZ2=${WORKSPACE_INSTALL_BZ2:-true}
+          - INSTALL_GMP=${WORKSPACE_INSTALL_GMP:-true}
+          - INSTALL_XDEBUG=${WORKSPACE_INSTALL_XDEBUG:-true}
+          - INSTALL_PCOV=${WORKSPACE_INSTALL_PCOV:-false}
+          - INSTALL_PHPDBG=${WORKSPACE_INSTALL_PHPDBG:-false}
+          - INSTALL_BLACKFIRE=${INSTALL_BLACKFIRE:-false}
+          - INSTALL_SSH2=${WORKSPACE_INSTALL_SSH2:-true}
+          - INSTALL_SOAP=${WORKSPACE_INSTALL_SOAP:-true}
+          - INSTALL_XSL=${WORKSPACE_INSTALL_XSL:-true}
+          - INSTALL_LDAP=${WORKSPACE_INSTALL_LDAP:-true}
+          - INSTALL_SMB=${WORKSPACE_INSTALL_SMB:-false}
+          - INSTALL_IMAP=${WORKSPACE_INSTALL_IMAP:-true}
+          - INSTALL_MONGO=${WORKSPACE_INSTALL_MONGO:-false}
+          - INSTALL_AMQP=${WORKSPACE_INSTALL_AMQP:-false}
+          - INSTALL_CASSANDRA=${WORKSPACE_INSTALL_CASSANDRA:-false}
+          - INSTALL_GEARMAN=${WORKSPACE_INSTALL_GEARMAN:-false}
+          - INSTALL_PHPREDIS=${WORKSPACE_INSTALL_PHPREDIS:-true}
+          - INSTALL_MSSQL=${WORKSPACE_INSTALL_MSSQL:-false}
+          - NVM_NODEJS_ORG_MIRROR=${WORKSPACE_NVM_NODEJS_ORG_MIRROR:-}
+          - INSTALL_NODE=${WORKSPACE_INSTALL_NODE:-true}
+          - NPM_REGISTRY=${WORKSPACE_NPM_REGISTRY:-}
+          - INSTALL_PNPM=${WORKSPACE_INSTALL_PNPM:-}
+          - INSTALL_YARN=${WORKSPACE_INSTALL_YARN:-true}
+          - INSTALL_NPM_GULP=${WORKSPACE_INSTALL_NPM_GULP:-false}
+          - INSTALL_NPM_BOWER=${WORKSPACE_INSTALL_NPM_BOWER:-false}
+          - INSTALL_NPM_VUE_CLI=${WORKSPACE_INSTALL_NPM_VUE_CLI:-true}
+          - INSTALL_NPM_ANGULAR_CLI=${WORKSPACE_INSTALL_NPM_ANGULAR_CLI:-false}
+          - INSTALL_DRUSH=${WORKSPACE_INSTALL_DRUSH:-false}
+          - INSTALL_WP_CLI=${WORKSPACE_INSTALL_WP_CLI:-false}
+          - INSTALL_DRUPAL_CONSOLE=${WORKSPACE_INSTALL_DRUPAL_CONSOLE:-false}
+          - INSTALL_AEROSPIKE=${WORKSPACE_INSTALL_AEROSPIKE:-false}
+          - INSTALL_OCI8=${WORKSPACE_INSTALL_OCI8:-true}
+          - INSTALL_V8JS=${WORKSPACE_INSTALL_V8JS:-false}
+          - COMPOSER_GLOBAL_INSTALL=${WORKSPACE_COMPOSER_GLOBAL_INSTALL:-true}
+          - COMPOSER_AUTH=${WORKSPACE_COMPOSER_AUTH:-false}
+          - COMPOSER_REPO_PACKAGIST=${WORKSPACE_COMPOSER_REPO_PACKAGIST:-}
+          - INSTALL_WORKSPACE_SSH=${WORKSPACE_INSTALL_WORKSPACE_SSH:-true}
+          - INSTALL_LARAVEL_ENVOY=${WORKSPACE_INSTALL_LARAVEL_ENVOY:-false}
+          - INSTALL_LARAVEL_INSTALLER=${WORKSPACE_INSTALL_LARAVEL_INSTALLER:-false}
+          - INSTALL_DEPLOYER=${WORKSPACE_INSTALL_DEPLOYER:-false}
+          - INSTALL_PRESTISSIMO=${WORKSPACE_INSTALL_PRESTISSIMO:-false}
+          - INSTALL_LINUXBREW=${WORKSPACE_INSTALL_LINUXBREW:-false}
+          - INSTALL_MC=${WORKSPACE_INSTALL_MC:-false}
+          - INSTALL_SYMFONY=${WORKSPACE_INSTALL_SYMFONY:-false}
+          - INSTALL_PYTHON=${WORKSPACE_INSTALL_PYTHON:-true}
+          - INSTALL_IMAGE_OPTIMIZERS=${WORKSPACE_INSTALL_IMAGE_OPTIMIZERS:-true}
+          - INSTALL_IMAGEMAGICK=${WORKSPACE_INSTALL_IMAGEMAGICK:-true}
+          - INSTALL_TERRAFORM=${WORKSPACE_INSTALL_TERRAFORM:-false}
+          - INSTALL_DUSK_DEPS=${WORKSPACE_INSTALL_DUSK_DEPS:-true}
+          - INSTALL_PG_CLIENT=${WORKSPACE_INSTALL_PG_CLIENT:-false}
+          - INSTALL_PHALCON=${WORKSPACE_INSTALL_PHALCON:-false}
+          - INSTALL_SWOOLE=${WORKSPACE_INSTALL_SWOOLE:-false}
+          - INSTALL_TAINT=${WORKSPACE_INSTALL_TAINT:-false}
+          - INSTALL_LIBPNG=${WORKSPACE_INSTALL_LIBPNG:-true}
+          - INSTALL_IONCUBE=${WORKSPACE_INSTALL_IONCUBE:-false}
+          - INSTALL_MYSQL_CLIENT=${WORKSPACE_INSTALL_MYSQL_CLIENT:-true}
+          - INSTALL_PING=${WORKSPACE_INSTALL_PING:-true}
+          - INSTALL_SSHPASS=${WORKSPACE_INSTALL_SSHPASS:-false}
+          - INSTALL_INOTIFY=${WORKSPACE_INSTALL_INOTIFY:-false}
+          - INSTALL_FSWATCH=${WORKSPACE_INSTALL_FSWATCH:-false}
+          - INSTALL_AST=${WORKSPACE_INSTALL_AST:-false}
+          - INSTALL_YAML=${WORKSPACE_INSTALL_YAML:-false}
+          - INSTALL_MAILPARSE=${WORKSPACE_INSTALL_MAILPARSE:-false}
+          - INSTALL_GIT_PROMPT=${WORKSPACE_INSTALL_GIT_PROMPT:-true}
+          - INSTALL_XMLRPC=${WORKSPACE_INSTALL_XMLRPC:-false}
+          - PUID=${WORKSPACE_PUID}
+          - PGID=${WORKSPACE_PGID}
+          - CHROME_DRIVER_VERSION=${WORKSPACE_CHROME_DRIVER_VERSION:-2.42}
+          - NODE_VERSION=${WORKSPACE_NODE_VERSION:-v12.18.0}
+          - YARN_VERSION=${WORKSPACE_YARN_VERSION:-latest}
+          - DRUSH_VERSION=${WORKSPACE_DRUSH_VERSION:-false}
+          - AST_VERSION=${WORKSPACE_AST_VERSION:-false}
+          - TZ=${WORKSPACE_TIMEZONE:-UTC}
+          - BLACKFIRE_CLIENT_ID=${BLACKFIRE_CLIENT_ID:-<client_id>}
+          - BLACKFIRE_CLIENT_TOKEN=${BLACKFIRE_CLIENT_TOKEN:-<client_token>}
+          - INSTALL_POWERLINE=${WORKSPACE_INSTALL_POWERLINE:-true}
+          - INSTALL_SUPERVISOR=${WORKSPACE_INSTALL_SUPERVISOR:-false}
+          - INSTALL_FFMPEG=${WORKSPACE_INSTALL_FFMPEG:-false}
+          - INSTALL_WKHTMLTOPDF=${WORKSPACE_INSTALL_WKHTMLTOPDF:-false}
+          - INSTALL_GNU_PARALLEL=${WORKSPACE_INSTALL_GNU_PARALLEL:-false}
+          - http_proxy
+          - https_proxy
+          - no_proxy
+      image: ${WORKSPACE_IMAGE:-eteamacr.azurecr.io/e-team/laravel/workspace}:${WORKSPACE_IMAGE_VERSION-3.0.0}
+      volumes:
+        - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}${APP_CODE_CONTAINER_FLAG}
+        - docker-in-docker:/certs/client
+        - ${PHP_WORKER_CONF_PATH_PREFIX}:/etc/supervisord.d
+      extra_hosts:
+        - "dockerhost:${DOCKER_HOST_IP}"
+      ports:
+        - "${WORKSPACE_SSH_PORT:-2222}:22"
+        - "${WORKSPACE_BROWSERSYNC_HOST_PORT:-3000}:3000"
+        - "${WORKSPACE_BROWSERSYNC_UI_HOST_PORT:-3001}:3001"
+        - "${WORKSPACE_VUE_CLI_SERVE_HOST_PORT:-8080}:8080"
+        - "${WORKSPACE_VUE_CLI_UI_HOST_PORT:-8000}:8000"
+        - "${WORKSPACE_ANGULAR_CLI_SERVE_HOST_PORT:-4200}:4200"
+      tty: true
+      environment:
+        - PHP_IDE_CONFIG=${PHP_IDE_CONFIG}
+        - DOCKER_HOST=tcp://docker-in-docker:2376
+        - DOCKER_TLS_VERIFY=1
+        - DOCKER_TLS_CERTDIR=/certs
+        - DOCKER_CERT_PATH=/certs/client
+      networks:
+        - frontend
+        - backend
+      links:
+        - docker-in-docker
+
+### PHP-FPM ##############################################
+    php-fpm:
+      build:
+        context: "${COMPOSE_LARADOCK_PACKAGE_PATH}/php-fpm"
+        args:
+          - CHANGE_SOURCE=${CHANGE_SOURCE:-false}
+          - BASE_IMAGE_TAG_PREFIX=${PHP_FPM_BASE_IMAGE_TAG_PREFIX:-latest}
+          - LARADOCK_PHP_VERSION=${PHP_VERSION:-7.4}
+          - LARADOCK_PHALCON_VERSION=${PHALCON_VERSION:-3.4.5}
+          - INSTALL_BZ2=${PHP_FPM_INSTALL_BZ2:-true}
+          - INSTALL_GMP=${PHP_FPM_INSTALL_GMP:-true}
+          - INSTALL_XDEBUG=${PHP_FPM_INSTALL_XDEBUG:-true}
+          - INSTALL_PCOV=${PHP_FPM_INSTALL_PCOV:-false}
+          - INSTALL_PHPDBG=${PHP_FPM_INSTALL_PHPDBG:-false}
+          - INSTALL_BLACKFIRE=${INSTALL_BLACKFIRE:-false}
+          - INSTALL_SSH2=${PHP_FPM_INSTALL_SSH2:-true}
+          - INSTALL_SOAP=${PHP_FPM_INSTALL_SOAP:-true}
+          - INSTALL_XSL=${PHP_FPM_INSTALL_XSL:-true}
+          - INSTALL_SMB=${PHP_FPM_INSTALL_SMB:-false}
+          - INSTALL_IMAP=${PHP_FPM_INSTALL_IMAP:-true}
+          - INSTALL_MONGO=${PHP_FPM_INSTALL_MONGO:-false}
+          - INSTALL_AMQP=${PHP_FPM_INSTALL_AMQP:-false}
+          - INSTALL_CASSANDRA=${PHP_FPM_INSTALL_CASSANDRA:-false}
+          - INSTALL_GEARMAN=${PHP_FPM_INSTALL_GEARMAN:-false}
+          - INSTALL_MSSQL=${PHP_FPM_INSTALL_MSSQL:-false}
+          - INSTALL_BCMATH=${PHP_FPM_INSTALL_BCMATH:-true}
+          - INSTALL_PHPREDIS=${PHP_FPM_INSTALL_PHPREDIS:-true}
+          - INSTALL_MEMCACHED=${PHP_FPM_INSTALL_MEMCACHED:-true}
+          - INSTALL_OPCACHE=${PHP_FPM_INSTALL_OPCACHE:-true}
+          - INSTALL_EXIF=${PHP_FPM_INSTALL_EXIF:-true}
+          - INSTALL_AEROSPIKE=${PHP_FPM_INSTALL_AEROSPIKE:-false}
+          - INSTALL_OCI8=${PHP_FPM_INSTALL_OCI8:-true}
+          - INSTALL_MYSQLI=${PHP_FPM_INSTALL_MYSQLI:-true}
+          - INSTALL_PGSQL=${PHP_FPM_INSTALL_PGSQL:-false}
+          - INSTALL_PG_CLIENT=${PHP_FPM_INSTALL_PG_CLIENT:-false}
+          - INSTALL_POSTGIS=${PHP_FPM_INSTALL_POSTGIS:-false}
+          - INSTALL_INTL=${PHP_FPM_INSTALL_INTL:-true}
+          - INSTALL_GHOSTSCRIPT=${PHP_FPM_INSTALL_GHOSTSCRIPT:-false}
+          - INSTALL_LDAP=${PHP_FPM_INSTALL_LDAP:-true}
+          - INSTALL_PHALCON=${PHP_FPM_INSTALL_PHALCON:-false}
+          - INSTALL_SWOOLE=${PHP_FPM_INSTALL_SWOOLE:-false}
+          - INSTALL_TAINT=${PHP_FPM_INSTALL_TAINT:-false}
+          - INSTALL_IMAGE_OPTIMIZERS=${PHP_FPM_INSTALL_IMAGE_OPTIMIZERS:-true}
+          - INSTALL_IMAGEMAGICK=${PHP_FPM_INSTALL_IMAGEMAGICK:-true}
+          - INSTALL_CALENDAR=${PHP_FPM_INSTALL_CALENDAR:-true}
+          - INSTALL_FAKETIME=${PHP_FPM_INSTALL_FAKETIME:-false}
+          - INSTALL_IONCUBE=${PHP_FPM_INSTALL_IONCUBE:-false}
+          - INSTALL_APCU=${PHP_FPM_INSTALL_APCU:-false}
+          - INSTALL_CACHETOOL=${PHP_FPM_INSTALL_CACHETOOL:-false}
+          - INSTALL_YAML=${PHP_FPM_INSTALL_YAML:-false}
+          - INSTALL_RDKAFKA=${PHP_FPM_INSTALL_RDKAFKA:-false}
+          - INSTALL_GETTEXT=${PHP_FPM_INSTALL_GETTEXT:-true}
+          - INSTALL_ADDITIONAL_LOCALES=${PHP_FPM_INSTALL_ADDITIONAL_LOCALES:-false}
+          - INSTALL_MYSQL_CLIENT=${PHP_FPM_INSTALL_MYSQL_CLIENT:-true}
+          - INSTALL_PING=${PHP_FPM_INSTALL_PING:-true}
+          - INSTALL_SSHPASS=${PHP_FPM_INSTALL_SSHPASS:-false}
+          - INSTALL_MAILPARSE=${PHP_FPM_INSTALL_MAILPARSE:-false}
+          - INSTALL_PCNTL=${PHP_FPM_INSTALL_PCNTL:-false}
+          - ADDITIONAL_LOCALES=${PHP_FPM_ADDITIONAL_LOCALES:-en_US.UTF-8 es_ES.UTF-8 fr_FR.UTF-8}
+          - INSTALL_FFMPEG=${PHP_FPM_FFMPEG:-false}
+          - INSTALL_WKHTMLTOPDF=${PHP_FPM_INSTALL_WKHTMLTOPDF:-false}
+          - INSTALL_XHPROF=${PHP_FPM_INSTALL_XHPROF:-false}
+          - INSTALL_XMLRPC=${PHP_FPM_INSTALL_XMLRPC:-false}
+          - PUID=${PHP_FPM_PUID}
+          - PGID=${PHP_FPM_PGID}
+          - LOCALE=${PHP_FPM_DEFAULT_LOCALE:-POSIX}
+          - http_proxy
+          - https_proxy
+          - no_proxy
+      image: ${PHP_FPM_IMAGE:-eteamacr.azurecr.io/e-team/laravel/php-fpm}:${PHP_FPM_IMAGE_VERSION:-3.0.0}
+      volumes:
+        - ${PHP_FPM_CONF_PATH}:/usr/local/etc/php/php.ini
+        - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}${APP_CODE_CONTAINER_FLAG}
+        - docker-in-docker:/certs/client
+      expose:
+        - "9000"
+      extra_hosts:
+        - "dockerhost:${DOCKER_HOST_IP}"
+      environment:
+        - PHP_IDE_CONFIG=${PHP_IDE_CONFIG}
+        - DOCKER_HOST=tcp://docker-in-docker:2376
+        - DOCKER_TLS_VERIFY=1
+        - DOCKER_TLS_CERTDIR=/certs
+        - DOCKER_CERT_PATH=/certs/client
+        - FAKETIME=${PHP_FPM_FAKETIME:-0}
+      depends_on:
+        - workspace
+      networks:
+        - backend
+      links:
+        - docker-in-docker
+
+# ### PHP Worker ############################################
+    php-worker:
+      build:
+        context: "${COMPOSE_LARADOCK_PACKAGE_PATH}/php-worker"
+        args:
+          - CHANGE_SOURCE=${CHANGE_SOURCE:-false}
+          - LARADOCK_PHP_VERSION=${PHP_VERSION:-7.4}
+          - PHALCON_VERSION=${PHALCON_VERSION:-3.4.5}
+          - INSTALL_BZ2=${PHP_WORKER_INSTALL_BZ2:-true}
+          - INSTALL_GD=${PHP_WORKER_INSTALL_GD:-true}
+          - INSTALL_IMAGEMAGICK=${PHP_WORKER_INSTALL_IMAGEMAGICK:-false}
+          - INSTALL_GMP=${PHP_WORKER_INSTALL_GMP:-true}
+          - INSTALL_PGSQL=${PHP_WORKER_INSTALL_PGSQL:-false}
+          - INSTALL_BCMATH=${PHP_WORKER_INSTALL_BCMATH:-true}
+          - INSTALL_OCI8=${PHP_WORKER_INSTALL_OCI8:-true}
+          - INSTALL_PHALCON=${PHP_WORKER_INSTALL_PHALCON:-false}
+          - INSTALL_SOAP=${PHP_WORKER_INSTALL_SOAP:-true}
+          - INSTALL_ZIP_ARCHIVE=${PHP_WORKER_INSTALL_ZIP_ARCHIVE:-true}
+          - INSTALL_MYSQL_CLIENT=${PHP_WORKER_INSTALL_MYSQL_CLIENT:-true}
+          - INSTALL_AMQP=${PHP_WORKER_INSTALL_AMQP:-false}
+          - INSTALL_CASSANDRA=${PHP_WORKER_INSTALL_CASSANDRA:-false}
+          - INSTALL_GEARMAN=${PHP_WORKER_INSTALL_GEARMAN:-false}
+          - INSTALL_GHOSTSCRIPT=${PHP_WORKER_INSTALL_GHOSTSCRIPT:-false}
+          - INSTALL_SWOOLE=${PHP_WORKER_INSTALL_SWOOLE:-false}
+          - INSTALL_TAINT=${PHP_WORKER_INSTALL_TAINT:-false}
+          - INSTALL_FFMPEG=${PHP_WORKER_INSTALL_FFMPEG:-false}
+          - INSTALL_REDIS=${PHP_WORKER_INSTALL_REDIS:-true}
+          - INSTALL_IMAP=${PHP_WORKER_INSTALL_IMAP:-true}
+          - INSTALL_XMLRPC=${PHP_WORKER_INSTALL_XMLRPC:-false}
+          - PUID=${PHP_WORKER_PUID}
+          - PGID=${PHP_WORKER_PGID}
+      image: ${PHP_WORKER_IMAGE:-eteamacr.azurecr.io/e-team/laravel/php-worker}:${PHP_WORKER_IMAGE_VERSION:-3.0.0}
+      volumes:
+        - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}${APP_CODE_CONTAINER_FLAG}
+        - ${PHP_WORKER_CONF_PATH_PREFIX}:/etc/supervisord.d
+      depends_on:
+        - workspace
+      extra_hosts:
+        - "dockerhost:${DOCKER_HOST_IP}"
+      networks:
+        - backend
+
+### NGINX Server #########################################
+    nginx:
+      build:
+        context: "${COMPOSE_LARADOCK_PACKAGE_PATH}/nginx"
+        args:
+          - CHANGE_SOURCE=${CHANGE_SOURCE:-false}
+          - PHP_UPSTREAM_CONTAINER=${NGINX_PHP_UPSTREAM_CONTAINER:-php-fpm}
+          - PHP_UPSTREAM_PORT=${NGINX_PHP_UPSTREAM_PORT:-9000}
+          - http_proxy
+          - https_proxy
+          - no_proxy
+      image: ${NGINX_IMAGE:-eteamacr.azurecr.io/e-team/laravel/nginx}:${NGINX_IMAGE_VERSION:-3.0.0}
+      volumes:
+        - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}${APP_CODE_CONTAINER_FLAG}
+        - ${NGINX_HOST_LOG_PATH}:/var/log/nginx:rw
+        - ${NGINX_H5PB_PATH}:/etc/nginx/h5bp/:ro
+        - ${NGINX_SITES_PATH}:/etc/nginx/sites-available:ro
+        - ${NGINX_SSL_PATH}:/etc/nginx/ssl:ro
+        - ${NGINX_CONF_PATH}:/etc/nginx/nginx.conf:ro
+      ports:
+        - "${NGINX_HOST_HTTP_PORT:-80}:80"
+        - "${NGINX_HOST_HTTPS_PORT:-443}:443"
+      depends_on:
+        - php-fpm
+      networks:
+        - frontend
+        - backend
+
+### MySQL ################################################
+    mysql:
+      build:
+        context: "${COMPOSE_LARADOCK_PACKAGE_PATH}/mysql"
+        args:
+          - MYSQL_VERSION=${MYSQL_VERSION:-8.0.19}
+      environment:
+        - MYSQL_DATABASE=${MYSQL_DATABASE:-default}
+        - MYSQL_USER=${MYSQL_USER:-default}
+        - MYSQL_PASSWORD=${MYSQL_PASSWORD:-secret}
+        - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-root}
+        - TZ=${WORKSPACE_TIMEZONE:-UTC}
+      image: ${MYSQL_IMAGE:-eteamacr.azurecr.io/e-team/mysql}:${MYSQL_IMAGE_VERSION:-3.0.0}
+      volumes:
+        - ${DATA_PATH_HOST}/mysql:/var/lib/mysql
+        - ${MYSQL_CONF_PATH_PREFIX}:/docker-entrypoint-initdb.d
+      ports:
+        - "${MYSQL_PORT:-3306}:3306"
+      networks:
+        - backend
+
+### Mailhog ################################################
+    mailhog:
+      build: "${COMPOSE_LARADOCK_PACKAGE_PATH}/mailhog"
+      image: ${MAILHOG_IMAGE:-eteamacr.azurecr.io/e-team/mailhog}:${MAILHOG_IMAGE_VERSION:-3.0.0}
+      ports:
+        - "1025:1025"
+        - "8025:8025"
+      networks:
+        - frontend
+        - backend
+
+### Docker-in-Docker ################################################
+    docker-in-docker:
+      image: docker:19.03-dind
+      environment:
+        DOCKER_TLS_SAN: DNS:docker-in-docker
+      privileged: true
+      volumes:
+        - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}
+        - docker-in-docker:/certs/client
+      expose:
+        - 2375
+      networks:
+        - backend
