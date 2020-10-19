@@ -1,15 +1,5 @@
-# make docker-path overridable in case of supporting addtional project roots
-docker-path :=  env_var_or_default('DC_PATH', '.docker')
-move-to-docker-dir := 'cd ' + docker-path + '&& '
-
-indent := "  "
-indent2x := indent + indent
-task-prefix := '>>' + indent
-warn-prefix := indent2x + 'WARN: '
-
-## @info new variables
-package-path-prefix := 'vendor/dennyweiss/laradock' # @todo use '$COMPOSE_LARADOCK_PACKAGE_PATH'
-config-package-path-prefix := 'vendor/dennyweiss/laradock-configuration' # @todo use '$COMPOSE_LARADOCK_CONFIGURATION_PACKAGE_PATH'
+package-path-prefix := env_var_or_default('COMPOSE_LARADOCK_PACKAGE_PATH', 'vendor/dennyweiss/laradock')
+config-package-path-prefix := env_var_or_default('COMPOSE_LARADOCK_CONFIGURATION_PACKAGE_PATH','vendor/dennyweiss/laradock-configuration')
 config-package-commands-path-prefix := config-package-path-prefix + '/src/commands'
 
 # Show available commands
