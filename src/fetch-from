@@ -56,7 +56,7 @@ REMOTE_PROJECT_PATH=''
 helper::initialize_remote_settings "${REMOTE_ENVIRONMENT}"
 readonly REMOTE_BASE_COMMAND="ssh ${REMOTE_URL}"
 
-db_dump_command="ssh "${REMOTE_URL}" 'cd ${REMOTE_PROJECT_PATH};bin/db-dump-for-remote.sh --no-backup --hide-title --hide-backup-output %s;'"
+db_dump_command="ssh "${REMOTE_URL}" 'cd ${REMOTE_PROJECT_PATH} && ${SCRIPT_PATH}/db-dump-for-remote.sh --no-backup --hide-title --hide-backup-output %s;'"
 db_command="rsync -vuzrS \"${SSH_BASE_PATH}/${REMOTE_DB_PATH}\" \"${DB_DEVELOPMENT}\" --checksum --include '*.sql' --include 'backup/' --exclude '*' --exclude '.DS_Store'"
 assets_command="rsync -vuzrS \"${SSH_BASE_PATH}/${REMOTE_ASSETS_PATH}\" \"${ASSETS_DEVELOPMENT}\" --checksum --exclude '.DS_Store'"
 files_command="rsync -vuzrS \"${SSH_BASE_PATH}/${REMOTE_FILES_PATH}\" \"${FILES_DEVELOPMENT}\" --checksum --exclude 'cache' --exclude '.DS_Store'"
