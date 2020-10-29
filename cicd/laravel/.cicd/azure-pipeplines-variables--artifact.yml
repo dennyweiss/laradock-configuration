@@ -1,0 +1,19 @@
+variables:
+  ARTIFACT_REPOSITORY_USER: "Azure DevOps Agent"
+  ARTIFACT_REPOSITORY_EMAIL: "AzureDevOpsAgent-$(DC_PROJECT_NAME)@testing.event-team.com"
+  ARTIFACT_DIRECTORY: ".artifacts"
+  ARTIFACT_REPOSITORY_SSH_KEY_FILE: ""
+  ARTIFACT_VERSION: "$(Build.SourceVersion)"
+  ARTIFACT_VERSION_TAG: 'unkown'
+  ARTIFACT_BUILD_ID: "$(Build.BuildId)"
+  ARTIFACT_BUILD_TAG: 'unkown'
+  ARTIFACT_TIMESTAMP: "unkown"
+  ARTIFACT_EXCLUDES_FILE: '.artifact.excludes'
+
+  # <// kept as reference variables are defined in project-variables
+  #     ARTIFACT_REPOSITORY: ""
+  #     ARTIFACT_REPOSITORY_SSH_KNOWN_HOST_ENTRY: ""
+  #     ARTIFACT_REPOSITORY_SSH_PUBLIC_KEY: ""
+  #     ARTIFACT_REPOSITORY_SSH_KEY_SECURE_FILENAME: ""
+  #       # '*_SSH_KEY_SECURE_FILENAME' name of file that is stored in azure devops secured files
+  # //>

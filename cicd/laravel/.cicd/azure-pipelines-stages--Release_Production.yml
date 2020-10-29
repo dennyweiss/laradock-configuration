@@ -1,0 +1,46 @@
+stages:
+  - stage: 'Release_Production'
+    displayName: 'Release to Production'
+    dependsOn:
+      - 'Release_Staging'
+    condition: eq(variables['stages_enabled__stage_release_production'], true)
+    variables:
+      artifactVersionBuildTagFromBuild: $[ stageDependencies.Build.from_source_to_artifact.outputs['artifactVersion.artifactVersionBuildTag'] ]
+    jobs:
+    - deployment: 'release_to_production'
+      timeoutInMinutes: 15
+      cancelTimeoutInMinutes: 5
+      pool:
+        vmImage: 'ubuntu-18.04'
+      environment: 'Production'
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+
+              # //////////////////////////////////////////////////////////////////////
+              # // DEBUG
+
+              - bash: |
+                  echo "VERSION                                                      = '$(artifactVersionBuildTagFromBuild)'"
+                  echo ''
+                  echo "PRODUCTION_ENV_SSH_KNOWN_HOST_ENTRY                          = '\$(PRODUCTION_ENV_SSH_KNOWN_HOST_ENTRY)'"
+                  echo ''
+                  echo "PRODUCTION_ENV_USER                                          = '\$(PRODUCTION_ENV_USER)'"
+                  echo "PRODUCTION_ENV_HOST                                          = '\$(PRODUCTION_ENV_HOST)'"
+                  echo "PRODUCTION_ENV_SSH_URL                                       = '\$(PRODUCTION_ENV_SSH_URL)'"
+                  echo ''
+                  echo "PRODUCTION_ENV_APP_PATH                                      = '\$(PRODUCTION_ENV_APP_PATH)'"
+                  echo "PRODUCTION_ENV_URL                                           = '\$(PRODUCTION_ENV_URL)'"
+                  echo ''
+                  echo "db_migration_enabled__stages_release                         = '$(db_migration_enabled__stages_release)'"
+                  echo "db_backup_enabled__stage_production                          = '$(db_backup_enabled__stage_production)'"
+                  echo "app_maintenance_during_deployment_enabled__stage_production = '$(app_maintenance_during_deployment_enabled__stage_production)'"
+                displayName: 'DEBUG'
+                condition: eq(variables['debug_mode__stage_production_deployment'], true)
+
+              - bash: |
+                  echo -e "Deployment: Placeholder (version: '$(artifactVersionBuildTagFromBuild)')"
+                  echo -e 'NOT IMPLEMENTED'
+                  exit 1
+                displayName: 'Deployment: Placeholder'

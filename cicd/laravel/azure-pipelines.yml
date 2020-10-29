@@ -1,0 +1,16 @@
+name: '$(Build.BuildId)  ($(Build.SourceBranchName))  '
+
+variables:
+- template: .cicd/azure-pipeplines-variables--project.yml # @todo use .cicd/azure-pipelines-variables--project.template.yml as starting point
+- template: .cicd/azure-pipeplines-variables.yml
+- template: .cicd/azure-pipeplines-variables--artifact.yml
+- template: .cicd/azure-pipeplines-variables--staging.yml
+- template: .cicd/azure-pipeplines-variables--production.yml
+
+trigger:
+- master
+
+stages:
+  - template: '.cicd/azure-pipelines-stages--Build.yml'
+  - template: '.cicd/azure-pipelines-stages--Release_Staging.yml'
+  - template: '.cicd/azure-pipelines-stages--Release_Production.yml'

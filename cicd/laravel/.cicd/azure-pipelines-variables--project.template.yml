@@ -1,0 +1,50 @@
+variables:
+
+  # ///////////////////////////////////////////////////////////////////////////
+  # // Project Settings ///////////////////////////////////////////////////////
+  DC_PROJECT_NAME: ''
+
+  ARTIFACT_REPOSITORY: ""
+  ARTIFACT_REPOSITORY_SSH_KNOWN_HOST_ENTRY: ""
+  ARTIFACT_REPOSITORY_SSH_PUBLIC_KEY: ""
+  ARTIFACT_REPOSITORY_SSH_KEY_SECURE_FILENAME: ""
+
+  # // staging
+  STAGING_ENV_USER: ""
+  STAGING_ENV_HOST: "" # evu-01633-jetstream.stage.events-united.eu
+  STAGING_ENV_APP_PATH: ""
+  STAGING_ENV_URL: ""
+  STAGING_ENV_SSH_KNOWN_HOST_ENTRY: ""
+
+  # // production
+  PRODUCTION_ENV_USER: ""
+  PRODUCTION_ENV_HOST: ""
+  PRODUCTION_ENV_APP_PATH: ""
+  PRODUCTION_ENV_URL: ""
+  PRODUCTION_ENV_SSH_KNOWN_HOST_ENTRY: ""
+
+  # ///////////////////////////////////////////////////////////////////////////
+  # // ACR Credentials ///////////////////////////////////////////////////////
+  ACR_URL: ""
+  ACR_SP_APP_ID: ""
+  # ACR_SP_APP_PASSWORD # define as secure credential in azure devops ui
+
+  # ///////////////////////////////////////////////////////////////////////////
+  # // Pipeline Configuration /////////////////////////////////////////////////
+
+  # // Debug - define as secure credential in azure devops ui ////////////////
+  # debug_mode__stage_build: true
+  # debug_mode__stage_staging_deployment: true
+  # debug_mode__stage_production_deployment: true
+
+  # // enable pipeline stages ///////////////////////////////////////////////
+  # stages_enabled__stage_build: true
+  # stages_enabled__stage_release_staging: true
+  # stages_enabled__stage_release_production: true
+
+  # // flags for deactivating tasks /////////////////////////////////////////
+  # db_migration_enabled__stages_release: true
+  # db_backup_enabled__stage_staging: true
+  # db_backup_enabled__stage_production: true
+  # app_maintenance_during_deployment_enabled__stage_staging: true
+  # app_maintenance_during_deployment_enabled__stage_production: true
