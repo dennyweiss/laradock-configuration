@@ -224,15 +224,15 @@ stages:
             docker-compose exec -T --user="${COMPOSE_USER:-laradock}" workspace \
             mysql --host="${DB_HOST}" --user="${DB_USERNAME}" --password="${DB_PASSWORD}" "${DB_DATABASE}" < db.sql
             docker-compose exec -T --user="${COMPOSE_USER:-laradock}" workspace \
-            php -d short_open_tag=off ./vendor/phpunit/phpunit/phpunit -v --colors=never --stderr --log-junit TEST-RESULTS.xml
+            php -d short_open_tag=off ./vendor/phpunit/phpunit/phpunit -v --colors=never --stderr --log-junit $(TESTING_PHPUNIT_RESULTS_SEARCH_FOLDER)/$(TESTING_PHPUNIT_RESULTS_FILE_NAME)
           displayName: 'PHP: run phpunit'
 
         - task: PublishTestResults@2
           displayName: 'PHP: publish phpunit result'
           inputs:
-            testResultsFormat: 'JUnit'
-            testResultsFiles: 'TEST-*.xml'
-            searchFolder: '.test-results'
+            testResultsFormat: '$(TESTING_PHPUNIT_RESULTS_FORMAT)'
+            testResultsFiles: '$(TESTING_PHPUNIT_RESULTS_FILE_PATTERN)'
+            searchFolder: '$(TESTING_PHPUNIT_RESULTS_SEARCH_FOLDER)'
             testRunTitle: 'phpunit'
             publishRunAttachments: true
 
