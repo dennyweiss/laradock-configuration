@@ -23,10 +23,6 @@ stages:
             echo "##vso[task.setvariable variable=ARTIFACT_BUILD_TAG]Build-${ARTIFACT_BUILD_ID}"
           displayName: 'Preparation: evaluate ARTIFACT_BUILD_TAG'
 
-        - bash: echo "##vso[task.setvariable variable=artifactVersionBuildTag;isOutput=true]${ARTIFACT_BUILD_TAG}"
-          name: artifactVersion
-          displayName: "Preparation: register 'artifactVersionBuildTag' for staging and production environment"
-
         - bash: |
             git config --global user.name "${ARTIFACT_REPOSITORY_USER}"
             git config --global user.email "${ARTIFACT_REPOSITORY_EMAIL}"
@@ -80,7 +76,6 @@ stages:
             echo "\$ARTIFACT_BUILD_TAG                              = '${ARTIFACT_BUILD_TAG}'"
             echo "\$ARTIFACT_TIMESTAMP                              = '${ARTIFACT_TIMESTAMP}'"
             echo "\$ARTIFACT_ARTIFACT_EXCLUDES_FILE                 = '${ARTIFACT_EXCLUDES_FILE}'"
-            echo "'artifactVersion.artifactVersionBuildTag'         = '$(artifactVersion.artifactVersionBuildTag)'"
             echo ''
             echo "\$STAGING_ENVIRONMENT_HOST                        = '${STAGING_ENVIRONMENT_HOST}'"
             echo "\$STAGING_ENVIRONMENT_URL                         = '${STAGING_ENVIRONMENT_URL}'"
@@ -203,7 +198,7 @@ stages:
           displayName: 'Preparation: php deps (docker) + dev installation'
 
         - bash: |
-            docker-compose exec -T --user="${COMPOSE_USER:-laradock}" workspace php artisan key:generate
+            docker-compose exec -T --user="${COMPOSE_USER:-laradock}" workspace php artisan key:generate --force
           displayName: 'PHP: generate app key'
 
         - bash: |
@@ -313,7 +308,7 @@ stages:
             git_message="${git_message}\n  uri:    '${SOURCE_REPOSITORY_URI}'"
             git_message="${git_message}\n  branch: '${SOURCE_REPOSITORY_BRANCH_NAME}'"
 
-            git tag -a '$(artifactVersion.artifactVersionBuildTag)' \
+            git tag -a "${ARTIFACT_BUILD_TAG}" \
               -m "Artifact created for source '${ARTIFACT_VERSION}' commit hash" \
               -m "$(echo -e "${git_message}")"
             git push --tags

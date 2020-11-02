@@ -4,8 +4,6 @@ stages:
     dependsOn:
       - 'Release_Staging'
     condition: eq(variables['stages_enabled__stage_release_production'], true)
-    variables:
-      artifactVersionBuildTagFromBuild: $[ stageDependencies.Build.from_source_to_artifact.outputs['artifactVersion.artifactVersionBuildTag'] ]
     jobs:
     - deployment: 'release_to_production'
       timeoutInMinutes: 15
@@ -18,11 +16,15 @@ stages:
           deploy:
             steps:
 
+              - bash: |
+                    echo "##vso[task.setvariable variable=ARTIFACT_BUILD_TAG]Build-${ARTIFACT_BUILD_ID}"
+                displayName: 'Preparation: evaluate ARTIFACT_BUILD_TAG'
+
               # //////////////////////////////////////////////////////////////////////
               # // DEBUG
 
               - bash: |
-                  echo "VERSION                                                      = '$(artifactVersionBuildTagFromBuild)'"
+                  echo "VERSION                                                      = '${ARTIFACT_BUILD_TAG}'"
                   echo ''
                   echo "PRODUCTION_ENV_SSH_KNOWN_HOST_ENTRY                          = '\$(PRODUCTION_ENV_SSH_KNOWN_HOST_ENTRY)'"
                   echo ''
@@ -76,7 +78,7 @@ stages:
               # // Deployment
 
               - bash: |
-                  current_artifact_version='$(artifactVersionBuildTagFromBuild)'
+                  current_artifact_version="${ARTIFACT_BUILD_TAG}"
                   ssh $(PRODUCTION_ENV_SSH_URL) << SSH_COMMAND
                     cd $(PRODUCTION_ENV_APP_PATH)
                     echo ''
