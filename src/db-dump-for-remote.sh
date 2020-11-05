@@ -60,7 +60,7 @@ fi
 helper::add_help_option
 l::log_default_options
 
-if ! -f "${ENVIRONMENT_FILEPATH}"; then
+if [[ ! -f "${ENVIRONMENT_FILEPATH}" ]]; then
   l::log_and_show_usage_and_exit 1 'ERROR' "${ENVIRONMENT_FILEPATH} file missing"
 fi
 
