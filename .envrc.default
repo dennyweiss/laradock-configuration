@@ -157,6 +157,19 @@ COMPOSE_SERVICE_STACK="${COMPOSE_SERVICE_STACK% }"
 export COMPOSE_SERVICE_STACK
 echo -e  "            [${COMPOSE_SERVICE_STACK//:/ }]"
 
+# // alias dockerized composer
+if [[ "${CREATE_ALIAS_FOR_DOCKERIZED_COMPOSER:-true}" == 'true' ]] \
+  && [[ -L 'bin/dockerized-composer' ]] \
+  && [[ ! -L 'bin/composer' ]]; then
+  (
+    dockerized_path="$(realpath 'bin/dockerized-composer')"
+    cd bin
+    ln -s "${dockerized_path}" composer
+  )
+  echo -en "${c_lgreen}"
+  echo -e  ">> INFO:${c_reset}  'bin/composer' alias created for 'bin/dockirized-composer'"
+fi
+
 # intentionally linebreak
 echo
 

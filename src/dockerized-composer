@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+DEFAULT_COMPOSER_VERSION='2.0.4'
+
+composer_command="docker run --rm --interactive --tty"
+composer_command="${composer_command} --volume $(pwd):/app"
+composer_command="${composer_command} --user $(id -u):$(id -g)"
+
+if [[ "${COMPOSER_AUTH:-false}" != 'false' ]]; then
+  composer_command="${composer_command} -e COMPOSER_AUTH=$(printf "%q" "${COMPOSER_AUTH}")"
+fi
+
+composer_command="${composer_command} composer:${DOCKER_COMPOSER_TAG:-${DEFAULT_COMPOSER_VERSION}}"
+composer_command="${composer_command} ${*}"
+
+if [[ "${DEBUG:-false}" == 'true' ]]; then
+  echo -e "INFO:  Composer docker command"
+  echo -e "       ${composer_command}"
+fi
+
+if [[ "${DRY_RUN:-false}" == 'true' ]]; then
+  echo -e "INFO:  Dry Run"
+  exit 0
+fi
+
+eval "${composer_command}"
