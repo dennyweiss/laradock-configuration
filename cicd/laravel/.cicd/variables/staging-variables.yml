@@ -1,5 +1,6 @@
 variables:
   # <// kept as reference variables are defined in project-variables
+  #     STAGING_ENV_NAME: "STAGING"
   #     STAGING_ENV_USER: ""
   #     STAGING_ENV_HOST: ""
   #     STAGING_ENV_APP_PATH: ""

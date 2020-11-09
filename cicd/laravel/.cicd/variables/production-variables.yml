@@ -1,5 +1,6 @@
 variables:
   # <// kept as reference variables are defined in project-variables
+  #  PRODUCTION_ENV_NAME: "Production"
   #  PRODUCTION_ENV_USER: ""
   #  PRODUCTION_ENV_HOST: ""
   #  PRODUCTION_ENV_APP_PATH: ""

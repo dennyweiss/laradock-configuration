@@ -3,14 +3,14 @@ stages:
     displayName: 'Release to Production'
     dependsOn:
       - 'Release_Staging'
-    condition: eq(variables['stages_enabled__stage_release_production'], true)
+    condition: and(eq(variables['stages_enabled__stage_release_production'], true), succeeded())
     jobs:
     - deployment: 'release_to_production'
       timeoutInMinutes: 15
       cancelTimeoutInMinutes: 5
       pool:
         vmImage: 'ubuntu-18.04'
-      environment: 'Production'
+      environment: '$(PRODUCTION_ENV_NAME)'
       strategy:
         runOnce:
           deploy:
@@ -131,7 +131,11 @@ stages:
               # // Test
 
               - bash: |
-                  curl -fsSL "${PRODUCTION_ENV_URL}"
+                  if [[ -z "${PRODUCTION_ENV_URL_CREDENTIALS}" ]]; then
+                    curl -fsSL --user "${PRODUCTION_ENV_URL_CREDENTIALS}" "${PRODUCTION_ENV_URL}"
+                  else
+                    curl -fsSL "${PRODUCTION_ENV_URL}"
+                  fi
                 displayName: 'Test: is application up and running'
 
 
