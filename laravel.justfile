@@ -249,13 +249,13 @@ phpunit +subcommands='':
 
 
 # Calls actions [start|stop|status] on xdebug
-xdebug action='status':
+xdebug action='help':
   #!/usr/bin/env bash
   if [[ '{{is-a-mixed-service-stack}}' == 'true' ]]; then
     echo "ERROR: \$COMPOSE_SERVICE_STACK_MIXED_WITH_LOCAL == '${COMPOSE_SERVICE_STACK_MIXED_WITH_LOCAL}'"
     exit 1
   fi
-  '{{package-path-prefix}}/php-fpm/xdebug' {{action}}
+  '{{config-package-path-prefix}}/src/commands/docker-exec-xdebug' {{action}}
 
 # push docker image
 image-push image='':

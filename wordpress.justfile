@@ -109,7 +109,7 @@ db action filepath='':
   @'{{config-package-commands-path-prefix}}/docker-wordpress-db' {{action}} {{filepath}}
 
 # Calls actions [start|stop|status] on xdebug
-xdebug action='status':
+xdebug action='help':
   @'{{config-package-path-prefix}}/src/commands/docker-exec-xdebug' {{action}}
 
 # Fetch db, assets & files from remote environment
