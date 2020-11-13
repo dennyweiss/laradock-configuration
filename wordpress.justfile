@@ -110,7 +110,7 @@ db action filepath='':
 
 # Calls actions [start|stop|status] on xdebug
 xdebug action='status':
-  @'{{package-path-prefix}}/php-fpm/xdebug' {{action}}
+  @'{{config-package-path-prefix}}/src/commands/docker-exec-xdebug' {{action}}
 
 # Fetch db, assets & files from remote environment
 fetch-from +parameters=('--help'):
