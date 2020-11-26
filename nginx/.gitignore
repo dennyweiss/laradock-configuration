@@ -1,3 +1,6 @@
 ssl/*
 !*.encrypted
 !_wildcard.dev.*
+!*.pem
+!certificate-generate
+!root-ca-install

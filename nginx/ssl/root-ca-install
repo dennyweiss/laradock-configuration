@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+if [[ "${1:-false}" == "false" ]]; then
+    echo -e "ERROR: location of root ca missing"
+    exit 1
+fi
+
+CAROOT="${1}"
+
+export CAROOT
+
+mkcert -install

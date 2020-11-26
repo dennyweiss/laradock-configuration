@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+
+set -e
+
+base_file_name="${1}"
+hostnames="${2}"
+
+if [[ "${base_file_name:-false}" == 'false' ]]; then
+    echo -e "ERROR: certificate base filename missing"
+    exit 1
+fi
+
+if [[ "${hostnames:-false}" == 'false' ]]; then
+    echo -e "ERROR: hostnames missing"
+    exit 1
+fi
+
+shift 1
+
+mkcert_pem_command="$(cat <<CERTCMD
+mkcert \
+    -install \
+    -cert-file "${base_file_name}.crt" \
+    -key-file  "${base_file_name}.key"\
+    ${@}
+CERTCMD
+)"
+
+mkcert_p12_command="$(cat <<CERTCMD
+mkcert \
+    -install \
+    -pkcs12 \
+    -p12-file  "${base_file_name}.pfx" \
+    ${@}
+CERTCMD
+)"
+
+copy_root_ca="$(cat <<CPRCA
+cp "$(mkcert -CAROOT)/"*.pem "$(pwd)"
+CPRCA
+)"
+
+if [[ "${DEBUG:-false}" != 'false' ]]; then
+ echo -e "INFO:   mkcert_command:"
+ echo -e "//> .pem .............................."
+ echo -e "${mkcert_pem_command_command}"
+ echo -e "//> .pfx/p12 .........................."
+ echo -e "${mkcert_p12_command_command}"
+ echo -e "        ..............................."
+ echo -e "//> copy CAROOT ......................."
+ echo -e "${copy_root_ca}"
+ echo -e "        ..............................."
+ echo
+fi
+
+eval "${mkcert_pem_command}"
+eval "${mkcert_p12_command}"
+eval "${copy_root_ca}"
+
