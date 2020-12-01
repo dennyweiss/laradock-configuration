@@ -1,8 +1,7 @@
 version: '3'
 
 services:
-
-### Workspace Utilities ##################################
-    workspace:
-      volumes:
-        - ${HOME:-unkown}/.ssh:/home/laradock/.ssh
+  ### Workspace Utilities ##################################
+  workspace:
+    volumes:
+      - ${HOME:-unkown}/.ssh:/home/laradock/.ssh
