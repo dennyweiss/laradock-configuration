@@ -1,0 +1,16 @@
+version: '3'
+
+# @info append filename to environmant variable `COMPOSE_FILE` in e.g `.env.user` file
+
+services:
+  ### Workspace Utilities ##################################
+  workspace:
+    ports:
+      - '${HMR_PORT}:${HMR_PORT}'
+    environment:
+      - HMR_HOST=${HMR_HOST}
+      - HMR_PORT=${HMR_PORT}
+      - HMR_HOST_DEV_SERVER=${HMR_HOST_DEV_SERVER}
+      - HMR_SSL_CERT_PATH=${HMR_SSL_CERT_PATH}
+      - HMR_SSL_KEY_PATH=${HMR_SSL_KEY_PATH}
+      - HMR_SSL_CAPEM_PATH=${HMR_SSL_CAPEM_PATH}
