@@ -1,5 +1,24 @@
 #!/usr/bin/env bash
 
+# //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#  Todo intodroduce run script 'setup-db-backup' to composer 'scripts' events
+#  "scripts": {
+#    "post-install-cmd": [
+#      \[...\]
+#      "@setup-db-backup"
+#    ],
+#    "post-update-cmd": [
+#      \[...\]
+#      "@setup-db-backup"
+#    ],
+#    \[...\]
+#    ],
+#    "setup-db-backup": [
+#      "if [[ -d .db ]] && [[ ! -L .db/wp-db-backup.sh ]]; then ln -s vendor/dennyweiss/laradock-configuration/src/db-backup.sh .db/wp-db-backup.sh; fi"
+#    ]
+#  }
+# //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 set -e
 set -o pipefail
 
