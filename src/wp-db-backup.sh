@@ -14,7 +14,7 @@
 #    \[...\]
 #    ],
 #    "setup-db-backup": [
-#      "if [[ -d .db ]] && [[ ! -L .db/wp-db-backup.sh ]]; then ln -s vendor/dennyweiss/laradock-configuration/src/wp-db-backup.sh .db/wp-db-backup.sh; fi"
+#      "if [ -d .db ] && [ ! -L .db/wp-db-backup.sh ]; then ( cd .db; ln -s ../vendor/dennyweiss/laradock-configuration/src/wp-db-backup.sh wp-db-backup.sh ); fi"
 #    ]
 #  }
 # //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
