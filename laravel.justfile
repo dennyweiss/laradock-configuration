@@ -1,3 +1,4 @@
+set dotenv-load := false
 package-path-prefix := env_var_or_default('COMPOSE_LARADOCK_PACKAGE_PATH', 'vendor/dennyweiss/laradock')
 config-package-path-prefix := env_var_or_default('COMPOSE_LARADOCK_CONFIGURATION_PACKAGE_PATH', 'vendor/dennyweiss/laradock-configuration')
 config-package-commands-path-prefix := config-package-path-prefix + '/src/commands'
