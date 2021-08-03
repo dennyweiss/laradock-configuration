@@ -22,7 +22,7 @@ dc +parameters_and_or_services:
 up +parameters_and_or_services='':
   #!/usr/bin/env bash
   if [[ '{{is-a-mixed-service-stack}}' == 'true' ]] && [[ '{{parameters_and_or_services}}' == 'php-fpm' ]]; then
-    brew services run php@74
+    brew services run php@7.4
     exit 0
   fi
 
