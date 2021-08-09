@@ -27,6 +27,17 @@ for dependency in "${dependencies[@]}"; do
   fi
 done
 
+# load nvm
+if [[ -n "${NVM_DIR}" ]]; then
+    type nvm >/dev/null 2>&1 || . "${NVM_DIR}/nvm.sh"
+    nvm use
+else
+    echo -en "${c_red}"
+    echo -e ">> ERROR: 'nvm' seems to be missing. Ensure that '\$NVM_DIR' is present"
+    echo -en "${c_reset}"
+    has_dependency_error='true'
+fi
+
 # [[ "${has_dependency_error}" == 'true' ]] && echo ''; # inject empty line if there is an dependency error
 
 # //////////////////////////////////////////////////////////////////////////////
