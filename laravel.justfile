@@ -4,13 +4,13 @@ config-package-path-prefix := env_var_or_default('COMPOSE_LARADOCK_CONFIGURATION
 config-package-commands-path-prefix := config-package-path-prefix + '/src/commands'
 nginx-error-log-path := env_var_or_default('NGINX_ERROR_LOG_PATH', '/usr/local/var/log/nginx/error.log')
 nginx-access-log-path := env_var_or_default('NGINX_ACCESS_LOG_PATH', '/usr/local/var/log/nginx/access.log')
+php-local-binary := env_var_or_default('PHP_LOCAL_BINARY', 'php')
 
 is-a-mixed-service-stack := env_var_or_default('COMPOSE_SERVICE_STACK_MIXED_WITH_LOCAL', 'false')
 
 # Show available commands
 default:
-  #!/usr/bin/env bash
-  just --list
+  @just --list
 
 alias help := default
 
@@ -22,7 +22,7 @@ dc +parameters_and_or_services:
 up +parameters_and_or_services='':
   #!/usr/bin/env bash
   if [[ '{{is-a-mixed-service-stack}}' == 'true' ]] && [[ '{{parameters_and_or_services}}' == 'php-fpm' ]]; then
-    brew services run php@7.4
+    brew services run {{php-local-binary}}
     exit 0
   fi
 
@@ -41,7 +41,7 @@ stack-up:
   {{config-package-commands-path-prefix}}/docker-compose-stack-up
 
   if [[ '{{is-a-mixed-service-stack}}' == 'true' ]]; then
-    brew services run php@7.4
+    brew services run {{php-local-binary}}
     brew services run nginx
   fi
 
@@ -51,7 +51,7 @@ alias stackup := stack-up
 stop +parameters_and_or_services='':
   #!/usr/bin/env bash
   if [[ '{{is-a-mixed-service-stack}}' == 'true' ]] && [[ '{{parameters_and_or_services}}' == 'php-fpm' ]]; then
-    brew services stop php@7.4
+    brew services stop {{php-local-binary}}
     exit 0
   fi
 
@@ -62,7 +62,7 @@ stop +parameters_and_or_services='':
 
   docker-compose stop {{parameters_and_or_services}}
   if [[ '{{is-a-mixed-service-stack}}' == 'true' ]]; then
-    brew services stop php@7.4
+    brew services stop {{php-local-binary}}
     brew services stop nginx
   fi
 

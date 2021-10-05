@@ -1,6 +1,12 @@
+set dotenv-load := false
 package-path-prefix := env_var_or_default('COMPOSE_LARADOCK_PACKAGE_PATH', 'vendor/dennyweiss/laradock')
-config-package-path-prefix := env_var_or_default('COMPOSE_LARADOCK_CONFIGURATION_PACKAGE_PATH','vendor/dennyweiss/laradock-configuration')
+config-package-path-prefix := env_var_or_default('COMPOSE_LARADOCK_CONFIGURATION_PACKAGE_PATH', 'vendor/dennyweiss/laradock-configuration')
 config-package-commands-path-prefix := config-package-path-prefix + '/src/commands'
+nginx-error-log-path := env_var_or_default('NGINX_ERROR_LOG_PATH', '/usr/local/var/log/nginx/error.log')
+nginx-access-log-path := env_var_or_default('NGINX_ACCESS_LOG_PATH', '/usr/local/var/log/nginx/access.log')
+php-local-binary := env_var_or_default('PHP_LOCAL_BINARY', 'php')
+
+is-a-mixed-service-stack := env_var_or_default('COMPOSE_SERVICE_STACK_MIXED_WITH_LOCAL', 'false')
 
 # Show available commands
 default:
@@ -14,19 +20,56 @@ dc +parameters_and_or_services:
 
 # Start one or more services
 up +parameters_and_or_services='':
-  @docker-compose up {{ parameters_and_or_services }}
+  #!/usr/bin/env bash
+  if [[ '{{is-a-mixed-service-stack}}' == 'true' ]] && [[ '{{parameters_and_or_services}}' == 'php-fpm' ]]; then
+    brew services run {{php-local-binary}}
+    exit 0
+  fi
+
+  if [[ '{{is-a-mixed-service-stack}}' == 'true' ]] && [[ '{{parameters_and_or_services}}' == 'nginx' ]]; then
+    brew services run nginx
+    exit 0
+  fi
+
+  docker-compose up {{parameters_and_or_services}}
 
 alias start := up
 
 # Start service stack in background
 stack-up:
-  @'{{config-package-commands-path-prefix}}/docker-compose-stack-up'
+  #!/usr/bin/env bash
+  {{config-package-commands-path-prefix}}/docker-compose-stack-up
+
+  if [[ '{{is-a-mixed-service-stack}}' == 'true' ]]; then
+    brew services run {{php-local-binary}}
+    brew services run nginx
+  fi
 
 alias stackup := stack-up
 
 # Stop running services
 stop +parameters_and_or_services='':
-  @docker-compose stop {{parameters_and_or_services}}
+  #!/usr/bin/env bash
+  if [[ '{{is-a-mixed-service-stack}}' == 'true' ]] && [[ '{{parameters_and_or_services}}' == 'php-fpm' ]]; then
+    brew services stop {{php-local-binary}}
+    exit 0
+  fi
+
+  if [[ '{{is-a-mixed-service-stack}}' == 'true' ]] && [[ '{{parameters_and_or_services}}' == 'nginx' ]]; then
+    brew services stop nginx
+    exit 0
+  fi
+
+  docker-compose stop {{parameters_and_or_services}}
+  if [[ '{{is-a-mixed-service-stack}}' == 'true' ]]; then
+    brew services stop {{php-local-binary}}
+    brew services stop nginx
+  fi
+
+restart:
+  #!/usr/bin/env bash
+  just stop
+  just stackup
 
 # Build one or multiple services at a time
 build +services='':
@@ -70,7 +113,47 @@ alias re := reload-environment
 
 # Show logs of running service
 log service='':
-  @docker-compose logs --follow {{service}}
+  #!/usr/bin/env bash
+  service='{{service}}'
+
+  case "${service}" in
+    php-fpm)
+      echo "INFO:  Log nginx errors"
+      if [[ '{{is-a-mixed-service-stack}}' == 'true' ]]; then
+        echo 'WARN:  Not Implemented'
+        echo "ERROR: \$COMPOSE_SERVICE_STACK_MIXED_WITH_LOCAL == '${COMPOSE_SERVICE_STACK_MIXED_WITH_LOCAL}'"
+        exit 1
+      fi
+      docker-compose logs --follow {{service}}
+    ;;
+    nginx)
+      echo "INFO:  Log nginx errors"
+      if [[ '{{is-a-mixed-service-stack}}' == 'true' ]]; then
+        if [[ ! -f '{{nginx-error-log-path}}' ]]; then
+          echo -e "ERROR: Could not find logfile: '{{nginx-error-log-path}}'"
+          exit 1
+        fi
+        tail -f {{nginx-error-log-path}}
+        exit 0
+      fi
+      docker-compose logs --follow {{service}}
+    ;;
+    nginx-access)
+      echo "INFO:  Log nginx access"
+      if [[ '{{is-a-mixed-service-stack}}' == 'true' ]]; then
+        if [[ ! -f '{{nginx-access-log-path}}' ]]; then
+          echo -e "ERROR: Could not find logfile: '{{nginx-access-log-path}}'"
+          exit 1
+        fi
+        tail -f {{nginx-access-log-path}}
+        exit 0
+      fi
+      docker-compose logs --follow {{service}}
+    ;;
+    *)
+      docker-compose logs --follow {{service}}
+    ;;
+  esac
 
 # Fetch container images from registries
 images-prefetch +images:
@@ -86,23 +169,40 @@ vault action file:
 
 # Calls composer with parameters inside 'workspace' service
 composer +subcommands='':
-  @docker-compose exec --user="${COMPOSE_USER:-laradock}" workspace composer {{subcommands}}
+  #!/usr/bin/env bash
+  if [[ '{{is-a-mixed-service-stack}}' == 'true' ]]; then
+    composer {{subcommands}}
+  else
+    docker-compose exec --user="${COMPOSE_USER:-laradock}" workspace composer {{subcommands}}
+  fi
 
 # Calls wp-cli with parameters inside 'workspace' service
 wp +subcommands='':
-  @docker-compose exec --user="${COMPOSE_USER:-laradock}" workspace wp {{subcommands}}
-
-# Calls npm with parameters inside 'workspace' service defaults to themedir
-npm +subcommands='':
-  @'{{config-package-commands-path-prefix}}/docker-compose-exec-npm' {{subcommands}}
+  #!/usr/bin/env bash
+  if [[ '{{is-a-mixed-service-stack}}' == 'true' ]]; then
+    php wp {{subcommands}}
+  else
+    docker-compose exec --user="${COMPOSE_USER:-laradock}" workspace wp {{subcommands}}
+  fi
 
 # Calls npm with parameters inside 'workspace' service defaults to themedir
 yarn +subcommands='':
-  @'{{config-package-commands-path-prefix}}/docker-compose-exec-yarn' {{subcommands}}
+  #!/usr/bin/env bash
+  if [[ '{{is-a-mixed-service-stack}}' == 'true' ]]; then
+    yarn {{subcommands}}
+  else
+    docker-compose exec --user="${COMPOSE_USER:-laradock}" workspace yarn {{subcommands}}
+  fi
 
 # Opens bash console inside workspace container
 bash +subcommands='':
-  @docker-compose exec --user="${COMPOSE_USER:-laradock}" workspace bash {{subcommands}}
+  #!/usr/bin/env bash
+  if [[ '{{is-a-mixed-service-stack}}' == 'true' ]]; then
+    echo "ERROR: \$COMPOSE_SERVICE_STACK_MIXED_WITH_LOCAL == '${COMPOSE_SERVICE_STACK_MIXED_WITH_LOCAL}'"
+    exit 1
+  fi
+
+  docker-compose exec --user="${COMPOSE_USER:-laradock}" workspace bash {{subcommands}}
 
 # Imports SQL DB from file and applies correct 'WP_HOME' or exports SQL dump to file
 db action filepath='':
@@ -110,7 +210,12 @@ db action filepath='':
 
 # Calls actions [start|stop|status] on xdebug
 xdebug action='help':
-  @'{{config-package-path-prefix}}/src/commands/docker-exec-xdebug' {{action}}
+  #!/usr/bin/env bash
+  if [[ '{{is-a-mixed-service-stack}}' == 'true' ]]; then
+    echo "ERROR: \$COMPOSE_SERVICE_STACK_MIXED_WITH_LOCAL == '${COMPOSE_SERVICE_STACK_MIXED_WITH_LOCAL}'"
+    exit 1
+  fi
+  '{{config-package-path-prefix}}/src/commands/docker-exec-xdebug' {{action}}
 
 # Fetch db, assets & files from remote environment
 fetch-from +parameters=('--help'):
