@@ -10,6 +10,8 @@ networks:
 volumes:
   mysql:
     driver: ${VOLUMES_DRIVER:-local}
+  postgres:
+    driver: ${VOLUMES_DRIVER:-local}
   memcached:
     driver: ${VOLUMES_DRIVER:-local}
   minio:
@@ -79,7 +81,7 @@ services:
         - INSTALL_IMAGEMAGICK=${WORKSPACE_INSTALL_IMAGEMAGICK:-true}
         - INSTALL_TERRAFORM=${WORKSPACE_INSTALL_TERRAFORM:-false}
         - INSTALL_DUSK_DEPS=${WORKSPACE_INSTALL_DUSK_DEPS:-true}
-        - INSTALL_PG_CLIENT=${WORKSPACE_INSTALL_PG_CLIENT:-false}
+        - INSTALL_PG_CLIENT=${WORKSPACE_INSTALL_PG_CLIENT:-true}
         - INSTALL_PHALCON=${WORKSPACE_INSTALL_PHALCON:-false}
         - INSTALL_SWOOLE=${WORKSPACE_INSTALL_SWOOLE:-false}
         - INSTALL_TAINT=${WORKSPACE_INSTALL_TAINT:-false}
@@ -174,8 +176,8 @@ services:
         - INSTALL_AEROSPIKE=${PHP_FPM_INSTALL_AEROSPIKE:-false}
         - INSTALL_OCI8=${PHP_FPM_INSTALL_OCI8:-true}
         - INSTALL_MYSQLI=${PHP_FPM_INSTALL_MYSQLI:-true}
-        - INSTALL_PGSQL=${PHP_FPM_INSTALL_PGSQL:-false}
-        - INSTALL_PG_CLIENT=${PHP_FPM_INSTALL_PG_CLIENT:-false}
+        - INSTALL_PGSQL=${PHP_FPM_INSTALL_PGSQL:-true}
+        - INSTALL_PG_CLIENT=${PHP_FPM_INSTALL_PG_CLIENT:-true}
         - INSTALL_POSTGIS=${PHP_FPM_INSTALL_POSTGIS:-false}
         - INSTALL_INTL=${PHP_FPM_INSTALL_INTL:-true}
         - INSTALL_GHOSTSCRIPT=${PHP_FPM_INSTALL_GHOSTSCRIPT:-false}
@@ -245,7 +247,7 @@ services:
         - INSTALL_GD=${PHP_WORKER_INSTALL_GD:-true}
         - INSTALL_IMAGEMAGICK=${PHP_WORKER_INSTALL_IMAGEMAGICK:-false}
         - INSTALL_GMP=${PHP_WORKER_INSTALL_GMP:-true}
-        - INSTALL_PGSQL=${PHP_WORKER_INSTALL_PGSQL:-false}
+        - INSTALL_PGSQL=${PHP_WORKER_INSTALL_PGSQL:-true}
         - INSTALL_BCMATH=${PHP_WORKER_INSTALL_BCMATH:-true}
         - INSTALL_OCI8=${PHP_WORKER_INSTALL_OCI8:-true}
         - INSTALL_PHALCON=${PHP_WORKER_INSTALL_PHALCON:-false}
@@ -321,6 +323,24 @@ services:
       - ${MYSQL_CONF_PATH_PREFIX}:/docker-entrypoint-initdb.d
     ports:
       - '${MYSQL_PORT:-3306}:3306'
+    networks:
+      - backend
+
+  ### PostgreSQL ###########################################
+  postgres:
+    build:
+      context: "${COMPOSE_LARADOCK_PACKAGE_PATH}/postgres"
+      args:
+        - POSTGRES_VERSION=${POSTGRES_VERSION:-13.4}
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-default}
+      - POSTGRES_USER=${POSTGRES_USER:-default}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-secret}
+    volumes:
+      - ${DATA_PATH_HOST}/postgres:/var/lib/postgresql/data
+      - ${COMPOSE_LARADOCK_PACKAGE_PATH}:/docker-entrypoint-initdb.d
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
     networks:
       - backend
 
