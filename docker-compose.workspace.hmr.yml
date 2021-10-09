@@ -1,6 +1,6 @@
-version: '3'
+version: '3.5'
 
-# @info append filename to environmant variable `COMPOSE_FILE` in e.g `.env.user` file
+# // @info requires `.env.user.hmr.{CURRENT_ENVIRONMENT}` with definition of used environment variables
 
 services:
   ### Workspace Utilities ##################################

@@ -22,12 +22,12 @@ dc +parameters_and_or_services:
 up +parameters_and_or_services='':
   #!/usr/bin/env bash
   if [[ '{{is-a-mixed-service-stack}}' == 'true' ]] && [[ '{{parameters_and_or_services}}' == 'php-fpm' ]]; then
-    brew services run {{php-local-binary}}
+    brew services restart {{php-local-binary}}
     exit 0
   fi
 
   if [[ '{{is-a-mixed-service-stack}}' == 'true' ]] && [[ '{{parameters_and_or_services}}' == 'nginx' ]]; then
-    brew services run nginx
+    brew services restart nginx
     exit 0
   fi
 
@@ -41,8 +41,8 @@ stack-up:
   {{config-package-commands-path-prefix}}/docker-compose-stack-up
 
   if [[ '{{is-a-mixed-service-stack}}' == 'true' ]]; then
-    brew services run {{php-local-binary}}
-    brew services run nginx
+    brew services restart {{php-local-binary}}
+    brew services restart nginx
   fi
 
 alias stackup := stack-up

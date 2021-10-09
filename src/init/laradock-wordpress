@@ -67,40 +67,55 @@ fi
 
 while read -r file; do link_file "${file}" ; done < <(
   cat <<DEPENDENCIES
+  vendor/dennyweiss/laradock-configuration/.envrc.default::.envrc
   vendor/dennyweiss/laradock-configuration/.env.dc.wordpress::.env.dc
   vendor/dennyweiss/laradock-configuration/docker-compose.wordpress.yml::docker-compose.yml
-  vendor/dennyweiss/laradock-configuration/.envrc.default::.envrc
   vendor/dennyweiss/laradock-configuration/requirements.txt::requirements.txt
   vendor/dennyweiss/laradock-configuration/wordpress.justfile::justfile
 DEPENDENCIES
 )
 
 enable_composer_auth() {
-  link_file 'vendor/dennyweiss/laradock-configuration/docker-compose.composer.auth.yml::docker-compose.composer.auth.yml'
+  link_file 'vendor/dennyweiss/laradock-configuration/docker-compose.workspace.composer_auth.yml::docker-compose.workspace.composer_auth.yml'
 
   local manual_step
   manual_step="$(cat <<-MS
-  COMPOSE_FILE="\${COMPOSE_FILE}:docker-compose.composer.auth.yml"
+  COMPOSE_FILE="\${COMPOSE_FILE}:docker-compose.workspace.composer_auth.yml"
 MS
 )"
 
   echo -e "${c_lgreen}"
-  echo -e  ">> INFO:${c_reset}  Add 'docker-compose.composer.auth.yml' file registration to './.env.user', through:"
+  echo -e  ">> INFO:${c_reset}  Add 'docker-compose.workspace.composer_auth.yml' file registration to './.env.user', through:"
   echo
   echo -e  "        ${manual_step}"
 }
 
 enable_local_ssh_configuration() {
-  link_file 'vendor/dennyweiss/laradock-configuration/docker-compose.ssh.user.yml::docker-compose.ssh.user.yml'
+  link_file 'vendor/dennyweiss/laradock-configuration/docker-compose.workspace.ssh.yml::docker-compose.workspace.ssh.yml'
 
   local manual_step
   manual_step="$(cat <<-MS
-  COMPOSE_FILE="\${COMPOSE_FILE}:docker-compose.ssh.user.yml"
+  COMPOSE_FILE="\${COMPOSE_FILE}:docker-compose.workspace.ssh.yml"
 MS
 )"
 
   echo -e "${c_lgreen}"
-  echo -e  ">> INFO:${c_reset}  Add 'docker-compose.ssh.user.yml' file registration to './.env.user', through:"
+  echo -e  ">> INFO:${c_reset}  Add 'docker-compose.workspace.ssh.yml' file registration to './.env.user', through:"
+  echo
+  echo -e  "        ${manual_step}"
+}
+
+enable_local_hmr_configuration() {
+  link_file 'vendor/dennyweiss/laradock-configuration/docker-compose.workspace.hmr.yml::docker-compose.workspace.hmr.yml'
+
+  local manual_step
+  manual_step="$(cat <<-MS
+  COMPOSE_FILE="\${COMPOSE_FILE}:docker-compose.workspace.hmr.yml"
+MS
+)"
+
+  echo -e "${c_lgreen}"
+  echo -e  ">> INFO:${c_reset}  Add 'docker-compose.workspace.hmr.yml' file registration to './.env.user', through:"
   echo
   echo -e  "        ${manual_step}"
 }
@@ -118,7 +133,7 @@ case "${answer_composer_auth}" in
   yes|y)
     enable_composer_auth
     echo -en "${c_lgreen}"
-    echo -e  ">> INFO:${c_reset}  docker-compose.composer.auth.yml linked"
+    echo -e  ">> INFO:${c_reset}  docker-compose.workspace.composer_auth.yml linked"
   ;;
   *)
     exit 0
@@ -133,7 +148,22 @@ case "${answer_ssh}" in
   yes|y)
     enable_local_ssh_configuration
     echo -en "${c_lgreen}"
-    echo -e  ">> INFO:${c_reset}  docker-compose.ssh.user.yml linked"
+    echo -e  ">> INFO:${c_reset}  docker-compose.workspace.ssh.yml linked"
+  ;;
+  *)
+    exit 0
+  ;;
+esac
+
+echo ''
+echo "${c_lyellow}Do you wish to to override host module replacement (HMR) settings for SSL usage?${c_reset} (yes/no)? "
+read -r answer_ssh
+echo
+case "${answer_ssh}" in
+  yes|y)
+    enable_local_hmr_configuration
+    echo -en "${c_lgreen}"
+    echo -e  ">> INFO:${c_reset}  docker-compose.workspace.hmr.yml linked"
   ;;
   *)
     exit 0

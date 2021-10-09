@@ -60,7 +60,7 @@ stages:
             echo "\$NGINX_SITES_PATH                                = '${NGINX_SITES_PATH}'"
             echo "\$NGINX_CONF_PATH                                 = '${NGINX_CONF_PATH}'"
             echo "\$NGINX_H5PB_PATH                                 = '${NGINX_H5PB_PATH}'"
-            echo "\$MYSQL_CONF_PATH_PREFIX                          = '${MYSQL_CONF_PATH_PREFIX}'"
+            echo "\$MYSQL_ENTRYPOINT_INITDB                          = '${MYSQL_ENTRYPOINT_INITDB}'"
             echo ''
             echo "\$SOURCE_REPOSITORY_ID                            = '${SOURCE_REPOSITORY_ID}'"
             echo "\$SOURCE_REPOSITORY_NAME                          = '${SOURCE_REPOSITORY_NAME}'"

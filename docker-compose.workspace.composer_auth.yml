@@ -1,4 +1,6 @@
-version: '3'
+version: '3.5'
+
+# // @info requires that a `composer.auth.json` exists use `composer.auth.json.template` as template
 
 services:
   ### Workspace Utilities ##################################

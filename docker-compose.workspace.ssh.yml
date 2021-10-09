@@ -1,4 +1,6 @@
-version: '3'
+version: '3.5'
+
+# // @info used for accessing workspace container through ssh
 
 services:
   ### Workspace Utilities ##################################
