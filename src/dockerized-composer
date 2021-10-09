@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-DEFAULT_COMPOSER_VERSION='2.0.4'
+DEFAULT_COMPOSER_VERSION='2.1.9'
 
 composer_command="docker run --rm --interactive --tty"
 composer_command="${composer_command} --volume $(pwd):/app"
