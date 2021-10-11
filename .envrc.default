@@ -135,9 +135,9 @@ fi
 
 # //////////////////////////////////////////////////////////////////////////////
 # // Define unique docker compose datalocation
-docker_compose_data_location="~/.laradock/data/${DC_PROJECT_NAME}"
+docker_compose_data_location="~/.laradock/data/${COMPOSE_PROJECT_NAME}"
 echo -en "${c_lgreen}"
-echo -e  ">> INFO:${c_reset}  derive docker data location from '\DC_PROJECT_NAME' ('${DC_PROJECT_NAME}'):"
+echo -e  ">> INFO:${c_reset}  derive docker data location from '\COMPOSE_PROJECT_NAME' ('${COMPOSE_PROJECT_NAME}'):"
 echo -e  "            [${docker_compose_data_location}]"
 export DATA_PATH_HOST="${docker_compose_data_location}"
 
@@ -175,7 +175,7 @@ if [[ "${CREATE_ALIAS_FOR_DOCKERIZED_COMPOSER:-false}" == 'true' ]] \
   && [[ ! -L 'bin/composer' ]]; then
   (
     dockerized_path="$(realpath 'bin/dockerized-composer')"
-    cd bin
+    cd bin || exit 1
     ln -s "${dockerized_path}" composer
   )
   echo -en "${c_lgreen}"
