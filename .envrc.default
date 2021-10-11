@@ -1,4 +1,5 @@
-# //    derived from 'vendor/dennyweiss/laradock-configuration/.envrc.default'
+#!/usr/bin/env bash
+
 # // Create python venv when python is present on system
 if which python &>/dev/null || which python3 &>/dev/null; then
   layout python-venv python3
