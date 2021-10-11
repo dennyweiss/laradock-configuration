@@ -169,7 +169,7 @@ export COMPOSE_SERVICE_STACK
 echo -e  "            [${COMPOSE_SERVICE_STACK//:/ }]"
 
 # // alias dockerized composer
-if [[ "${CREATE_ALIAS_FOR_DOCKERIZED_COMPOSER:-true}" == 'true' ]] \
+if [[ "${CREATE_ALIAS_FOR_DOCKERIZED_COMPOSER:-false}" == 'true' ]] \
   && [[ -L 'bin/dockerized-composer' ]] \
   && [[ ! -L 'bin/composer' ]]; then
   (
@@ -178,7 +178,7 @@ if [[ "${CREATE_ALIAS_FOR_DOCKERIZED_COMPOSER:-true}" == 'true' ]] \
     ln -s "${dockerized_path}" composer
   )
   echo -en "${c_lgreen}"
-  echo -e  ">> INFO:${c_reset}  'bin/composer' alias created for 'bin/dockirized-composer'"
+  echo -e  ">> INFO:${c_reset}  'bin/composer' alias created for 'bin/dockerized-composer'"
 fi
 
 # intentionally linebreak
