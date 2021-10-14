@@ -17,7 +17,7 @@ PATH_add "${custom_bin_path}"
 # //////////////////////////////////////////////////////////////////////////////
 # Check project dependencies are met
 has_dependency_error='false';
-dependencies=( 'docker' 'docker-compose' 'just' 'composer' )
+dependencies=( 'docker' 'docker-compose' 'just' 'composer' 'jq' )
 
 for dependency in "${dependencies[@]}"; do
   if ! which "${dependency}" &>/dev/null; then

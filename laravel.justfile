@@ -163,7 +163,7 @@ images-prefetch +images:
 registry action:
   @'{{config-package-commands-path-prefix}}/docker-registry' {{action}}
 
-# Create ACR service priciple for roles [owner,acrpull,acrpush]
+# Create ACR service priciple for roles [Owner,AcrPull,AcrPush]
 acr-create-service-principle acr_name='eteamacr.azurecr.io' acr_role='' service_principle_name='':
   #!/usr/bin/env bash
   ACR_NAME='{{acr_name}}'
@@ -187,16 +187,26 @@ acr-create-service-principle acr_name='eteamacr.azurecr.io' acr_role='' service_
   # Create the service principal with rights scoped to the registry.
   # Default permissions are for docker pull access. Modify the '--role'
   # argument value as desired:
-  # acrpull:     pull only
-  # acrpush:     push and pull
-  # owner:       push, pull, and assign roles
-  SP_PASSWD=$(az ad sp create-for-rbac --name http://$SERVICE_PRINCIPAL_NAME --scopes $ACR_REGISTRY_ID --role acrpull --query password --output tsv)
-  SP_APP_ID=$(az ad sp show --id http://$SERVICE_PRINCIPAL_NAME --query appId --output tsv)
+  # AcrPull:     pull only
+  # AcrPush:     push and pull
+  # Owner:       push, pull, and assign roles
 
-  echo -e "\$SERVICE_PRINCIPAL_NAME   = '${SERVICE_PRINCIPAL_NAME}'"
-  echo -e "\$USER_DR_URL              = '${ACR_NAME}'"
-  echo -e "\$USER_DR_SP_APP_ID        = '${SP_APP_ID}'"
-  echo -e "\$USER_DR_SP_APP_PASSWORD  = '${SP_PASSWD}'"
+  SP_VALUE=$(az ad sp create-for-rbac --name $SERVICE_PRINCIPAL_NAME --scopes $ACR_REGISTRY_ID --role $ACR_ROLE)
+
+  if [[ "${DEBUG}" == 'true' ]]; then
+    echo
+    echo "RAW:"
+    echo "${SP_VALUE}"
+    echo
+  fi
+  
+  USER_DR_SP_APP_ID="$(echo "${SP_VALUE}" | jq -r '.appId')"
+  USER_DR_SP_APP_PASSWORD="$(echo "${SP_VALUE}" | jq -r '.password')"
+
+  echo -e "SERVICE_PRINCIPAL_NAME='${SERVICE_PRINCIPAL_NAME}'"
+  echo -e "USER_DR_URL='${ACR_NAME}'"
+  echo -e "USER_DR_SP_APP_ID='${USER_DR_SP_APP_ID}'"
+  echo -e "USER_DR_SP_APP_PASSWORD='${USER_DR_SP_APP_PASSWORD}'"
 
 # Encrypt or decrypt file
 vault action file:
