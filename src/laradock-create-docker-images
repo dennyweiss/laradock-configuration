@@ -13,7 +13,6 @@ php-worker|4.0.0
 workspace|4.0.0
 HERE_DOC
 )
-# @todo ^ add 'registry' as third parameter
 
 get() {
   value="${1}"
@@ -38,6 +37,13 @@ HERE_DOC
 )
 
   echo "${blueprint}" | xargs
+}
+
+resolve_repository() {
+    service="${1}"
+    service_image="$(docker-compose config --format json | jq -r ".services.${service}.image")"
+
+    get "${service_image}" 0 ':'
 }
 
 execute() {
@@ -99,24 +105,25 @@ execute() {
       eval "${build_command}"
     fi
 
-    # @todo docker push eteamacr.azurecr.io/e-team/laravel/nginx --all-tags
-    # @todo add registry name to iteration
-    push_command="docker-compose push ${service}"
-
     if [[ "${DEBUG:-false}" == 'true' ]];then
-      echo "push_command:               '${push_command}'"
+    echo
     fi
-
-    if [[ "${DRY_RUN:-false}" == 'false' ]];then
-      eval "${push_command}"
-    fi
-
-
-    if [[ "${DEBUG:-false}" == 'true' ]];then
-      echo
-    fi
-
   done
+
+  repository="$(resolve_repository "${service}")"
+  push_command="docker push ${repository} --all-tags"
+
+  if [[ "${DEBUG:-false}" == 'true' ]];then
+    echo "push_command:               '${push_command}'"
+  fi
+
+  if [[ "${DRY_RUN:-false}" == 'false' ]];then
+    eval "${push_command}"
+  fi
+
+  if [[ "${DEBUG:-false}" == 'true' ]];then
+    echo
+  fi
 }
 
 if [[ "${selected_service}" != 'false' ]]; then
@@ -132,7 +139,7 @@ else
         echo
       fi
 
-#      execute "$(get "${single_service}" 0)" "$(get "${single_service}" 1)"
+      execute "$(get "${single_service}" 0)" "$(get "${single_service}" 1)"
   done
 fi
 
