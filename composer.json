@@ -12,7 +12,8 @@
     "bin": [
       "src/init/laradock-wordpress",
       "src/init/laradock-laravel",
-      "src/dockerized-composer"
+      "src/dockerized-composer",
+      "src/laradock-create-docker-images"
     ],
     "repositories": [
       {

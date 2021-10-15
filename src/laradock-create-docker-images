@@ -1,0 +1,138 @@
+#!/usr/bin/env bash
+
+selected_service="${1:-false}"
+
+ALL_SERVICES=$(cat <<'HERE_DOC'
+nginx|4.0.0
+mysql|4.0.0
+postgres|4.0.0
+redis|4.0.0
+mailhog|4.0.0
+php-fpm|4.0.0
+php-worker|4.0.0
+workspace|4.0.0
+HERE_DOC
+)
+# @todo ^ add 'registry' as third parameter
+
+get() {
+  value="${1}"
+  key="${2}"
+  DELIMITER=${3:-|}
+
+  resolved_array=($(echo "${value}" | tr "${DELIMITER}" "\n"))
+
+  echo "${resolved_array[${key}]}"
+}
+
+create_service_blueprint() {
+  service_name="${1}"
+  version="${2}"
+
+  blueprint=$(cat <<HERE_DOC
+  ${service_name}|${version}|1000|1000|default
+  ${service_name}|${version}|1001|116|agent
+  ${service_name}|${version}|501|501|macos-first
+  ${service_name}|${version}|502|502|macos-second
+HERE_DOC
+)
+
+  echo "${blueprint}" | xargs
+}
+
+execute() {
+  service="${1}"
+  version="${2}"
+
+  for single_service_blueprint in $(printf "%s\n" "$(create_service_blueprint "${service}" "${version}")"); do
+
+    LOCAL_VERSION="$(get "${single_service_blueprint}" 1)"
+    WORKSPACE_PUID="$(get "${single_service_blueprint}" 2)"
+    WORKSPACE_PGID="$(get "${single_service_blueprint}" 3)"
+    PHP_FPM_PUID="$(get "${single_service_blueprint}" 2)"
+    PHP_FPM_PGID="$(get "${single_service_blueprint}" 3)"
+    PHP_WORKER_PUID="$(get "${single_service_blueprint}" 2)"
+    PHP_WORKER_PGID="$(get "${single_service_blueprint}" 3)"
+
+    if [[ $(get "${single_service_blueprint}" 4)  == 'default' ]]; then
+      WORKSPACE_IMAGE_VERSION="${LOCAL_VERSION}"
+      PHP_FPM_IMAGE_VERSION="${LOCAL_VERSION}"
+      PHP_WORKER_IMAGE_VERSION="${LOCAL_VERSION}"
+      NGINX_IMAGE_VERSION="${LOCAL_VERSION}"
+      # shellcheck disable=SC2034
+      MYSQL_IMAGE_VERSION="${LOCAL_VERSION}"
+      # shellcheck disable=SC2034
+      POSTGRES_IMAGE_VERSION="${LOCAL_VERSION}"
+      # shellcheck disable=SC2034
+      REDIS_IMAGE_VERSION="${LOCAL_VERSION}"
+      # shellcheck disable=SC2034
+      MAILHOG_IMAGE_VERSION="${LOCAL_VERSION}"
+    else
+      WORKSPACE_IMAGE_VERSION="${LOCAL_VERSION}-u${WORKSPACE_PUID}-g${WORKSPACE_PGID}"
+      # shellcheck disable=SC2034
+      PHP_FPM_IMAGE_VERSION="${LOCAL_VERSION}-u${PHP_FPM_PUID}-g${PHP_FPM_PGID}"
+      # shellcheck disable=SC2034
+      PHP_WORKER_IMAGE_VERSION="${LOCAL_VERSION}-u${PHP_WORKER_PUID}-g${PHP_WORKER_PGID}"
+      # shellcheck disable=SC2034
+      NGINX_IMAGE_VERSION="${LOCAL_VERSION}-u${PHP_FPM_PUID}-g${PHP_FPM_PGID}"
+    fi
+
+    if [[ "${DEBUG:-false}" == 'true' ]];then
+      echo "LOCAL_VERSION:              '${LOCAL_VERSION}'"
+      echo "WORKSPACE_IMAGE_VERSION:    '${WORKSPACE_IMAGE_VERSION}'"
+      echo "PHP_FPM_IMAGE_VERSION:      '${PHP_FPM_IMAGE_VERSION}'"
+      echo "PHP_WORKER_IMAGE_VERSION:   '${PHP_WORKER_IMAGE_VERSION}'"
+      echo "NGINX_IMAGE_VERSION:        '${NGINX_IMAGE_VERSION}'"
+      echo "MYSQL_IMAGE_VERSION:        '${MYSQL_IMAGE_VERSION}'"
+      echo "POSTGRES_IMAGE_VERSION:     '${POSTGRES_IMAGE_VERSION}'"
+      echo "REDIS_IMAGE_VERSION:        '${REDIS_IMAGE_VERSION}'"
+      echo "MAILHOG_IMAGE_VERSION:      '${MAILHOG_IMAGE_VERSION}'"
+    fi
+
+    build_command="docker-compose build ${service}"
+
+    if [[ "${DEBUG:-false}" == 'true' ]];then
+      echo "build_command:              '${build_command}'"
+    fi
+
+    if [[ "${DRY_RUN:-false}" == 'false' ]];then
+      eval "${build_command}"
+    fi
+
+    # @todo docker push eteamacr.azurecr.io/e-team/laravel/nginx --all-tags
+    # @todo add registry name to iteration
+    push_command="docker-compose push ${service}"
+
+    if [[ "${DEBUG:-false}" == 'true' ]];then
+      echo "push_command:               '${push_command}'"
+    fi
+
+    if [[ "${DRY_RUN:-false}" == 'false' ]];then
+      eval "${push_command}"
+    fi
+
+
+    if [[ "${DEBUG:-false}" == 'true' ]];then
+      echo
+    fi
+
+  done
+}
+
+if [[ "${selected_service}" != 'false' ]]; then
+  execute "$(get "${selected_service}" 0)" "$(get "${selected_service}" 1)"
+else
+  for single_service in $(printf "%s\n" "${ALL_SERVICES}"); do
+      service_name="$(get "${single_service}" 0)"
+      service_version="$(get "${single_service}" 1)"
+
+      if [[ "${DEBUG:-false}" == 'true' ]];then
+        echo "service_name:              '${service_name}'"
+        echo "service_version:           '${service_version}'"
+        echo
+      fi
+
+#      execute "$(get "${single_service}" 0)" "$(get "${single_service}" 1)"
+  done
+fi
+
