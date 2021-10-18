@@ -1,6 +1,6 @@
 version: '3.5'
 
-# // @info requires `.env.user.hmr.{CURRENT_ENVIRONMENT}` with definition of used environment variables
+# // @info requires `.env.user.hmr with definition of used environment variables
 
 services:
   ### Workspace Utilities ##################################
