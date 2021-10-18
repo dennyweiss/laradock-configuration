@@ -19,6 +19,7 @@ get() {
   key="${2}"
   DELIMITER=${3:-|}
 
+  # shellcheck disable=SC2207
   resolved_array=($(echo "${value}" | tr "${DELIMITER}" "\n"))
 
   echo "${resolved_array[${key}]}"
