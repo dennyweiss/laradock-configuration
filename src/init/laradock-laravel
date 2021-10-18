@@ -120,7 +120,9 @@ MS
   echo -e  "        ${manual_step}"
 }
 
-if [[ "${QUIET:-true}" == 'true' ]]; then
+if [[ "${QUIET:-false}" == 'true' ]]; then
+  echo "INFO:  \$QUIET=='true'"
+  echo
   exit 0
 fi
 
