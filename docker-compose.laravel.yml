@@ -138,7 +138,7 @@ services:
         - http_proxy
         - https_proxy
         - no_proxy
-    image: ${WORKSPACE_IMAGE:-eteamacr.azurecr.io/e-team/laravel/workspace}:${WORKSPACE_IMAGE_VERSION-4.0.0}
+    image: ${WORKSPACE_IMAGE:-eteamacr.azurecr.io/e-team/laravel/workspace}:${WORKSPACE_IMAGE_VERSION:-4.0.0}
     volumes:
       - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}${APP_CODE_CONTAINER_FLAG}
       - docker-in-docker:/certs/client
