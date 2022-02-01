@@ -199,7 +199,7 @@ acr-create-service-principle acr_name='eteamacr.azurecr.io' acr_role='' service_
     echo "${SP_VALUE}"
     echo
   fi
-  
+
   USER_DR_SP_APP_ID="$(echo "${SP_VALUE}" | jq -r '.appId')"
   USER_DR_SP_APP_PASSWORD="$(echo "${SP_VALUE}" | jq -r '.password')"
 
@@ -290,46 +290,3 @@ image-list:
       echo "${image}"
     fi
   done
-
-code-style type='all':
-  #!/usr/bin/env bash
-
-  apply_php_code_style() {
-    echo
-    echo "INFO:  Apply php cs fixer"
-    bin/php-cs-fixer fix
-  }
-
-  apply_frontend_code_styles() {
-    echo
-    echo "INFO:  Apply prettier"
-    node_modules/.bin/prettier --ignore-path=.eslintignore  --loglevel=log --write --list-different .
-  }
-
-  if [[ ! -L 'bin/php-cs-fixer' ]]; then
-    echo -e "ERROR: PHP CS Fixer missing but required"
-    exit 1
-  fi
-
-  if [[ ! -L 'node_modules/.bin/prettier' ]]; then
-    echo -e "ERROR: Prettier missing but required"
-    exit 1
-  fi
-
-  case '{{type}}' in
-    php)
-        apply_php_code_style
-        ;;
-    frontend|js)
-        apply_frontend_code_styles
-        ;;
-    all)
-        apply_php_code_style
-        apply_frontend_code_styles
-        ;;
-    *)
-     echo -e "ERROR: '{{type}}' not supported, use [php|frontend|js|all]"
-     exit 1
-     ;;
-  esac
-
