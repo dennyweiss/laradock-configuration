@@ -42,7 +42,7 @@ HERE_DOC
 
 resolve_repository() {
     service="${1}"
-    service_image="$(docker-compose config --format json | jq -r ".services.${service}.image")"
+    service_image="$(docker compose config --format json | jq -r ".services.${service}.image")"
 
     get "${service_image}" 0 ':'
 }
@@ -96,7 +96,7 @@ execute() {
       echo "MAILHOG_IMAGE_VERSION:      '${MAILHOG_IMAGE_VERSION}'"
     fi
 
-    build_command="docker-compose build ${service}"
+    build_command="docker compose build ${service}"
 
     if [[ "${DEBUG:-false}" == 'true' ]];then
       echo "build_command:              '${build_command}'"

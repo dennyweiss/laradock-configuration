@@ -139,7 +139,7 @@ services:
         - http_proxy
         - https_proxy
         - no_proxy
-    image: ${WORKSPACE_IMAGE:-eteamacr.azurecr.io/e-team/laravel/workspace}:${WORKSPACE_IMAGE_VERSION:-4.0.0}
+    image: ${WORKSPACE_IMAGE:-eteamacr.azurecr.io/e-team/laravel/workspace}:${WORKSPACE_IMAGE_VERSION:-4.0.6}
     volumes:
       - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}${APP_CODE_CONTAINER_FLAG}
       - docker-in-docker:/certs/client
@@ -250,7 +250,7 @@ services:
         - http_proxy
         - https_proxy
         - no_proxy
-    image: ${PHP_FPM_IMAGE:-eteamacr.azurecr.io/e-team/laravel/php-fpm}:${PHP_FPM_IMAGE_VERSION:-4.0.0}
+    image: ${PHP_FPM_IMAGE:-eteamacr.azurecr.io/e-team/laravel/php-fpm}:${PHP_FPM_IMAGE_VERSION:-4.0.6}
     volumes:
       - ${PHP_FPM_CONF_PATH}:/usr/local/etc/php/php.ini
       - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}${APP_CODE_CONTAINER_FLAG}
@@ -314,7 +314,7 @@ services:
         - INSTALL_SSDB=${PHP_WORKER_INSTALL_SSDB:-false}
         - PUID=${PHP_WORKER_PUID}
         - PGID=${PHP_WORKER_PGID}
-    image: ${PHP_WORKER_IMAGE:-eteamacr.azurecr.io/e-team/laravel/php-worker}:${PHP_WORKER_IMAGE_VERSION:-4.0.0}
+    image: ${PHP_WORKER_IMAGE:-eteamacr.azurecr.io/e-team/laravel/php-worker}:${PHP_WORKER_IMAGE_VERSION:-4.0.6}
     volumes:
       - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}${APP_CODE_CONTAINER_FLAG}
       - ${PHP_WORKER_CONF_PATH_PREFIX}:/etc/supervisord.d
@@ -336,7 +336,7 @@ services:
         - http_proxy
         - https_proxy
         - no_proxy
-    image: ${NGINX_IMAGE:-eteamacr.azurecr.io/e-team/laravel/nginx}:${NGINX_IMAGE_VERSION:-4.0.0}
+    image: ${NGINX_IMAGE:-eteamacr.azurecr.io/e-team/laravel/nginx}:${NGINX_IMAGE_VERSION:-4.0.6}
     volumes:
       - ${APP_CODE_PATH_HOST}:${APP_CODE_PATH_CONTAINER}${APP_CODE_CONTAINER_FLAG}
       - ${NGINX_HOST_LOG_PATH}:/var/log/nginx:rw
@@ -366,7 +366,7 @@ services:
       - MYSQL_PASSWORD=${MYSQL_PASSWORD:-secret}
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-root}
       - TZ=${WORKSPACE_TIMEZONE:-UTC}
-    image: ${MYSQL_IMAGE:-eteamacr.azurecr.io/e-team/mysql}:${MYSQL_IMAGE_VERSION:-4.0.0}
+    image: ${MYSQL_IMAGE:-eteamacr.azurecr.io/e-team/mysql}:${MYSQL_IMAGE_VERSION:-4.0.6}
     volumes:
       - ${DATA_PATH_HOST}/mysql:/var/lib/mysql
       - ${MYSQL_ENTRYPOINT_INITDB}:/docker-entrypoint-initdb.d
@@ -381,7 +381,7 @@ services:
       context: "${COMPOSE_LARADOCK_PACKAGE_PATH}/postgres"
       args:
         - POSTGRES_VERSION=${POSTGRES_VERSION:-13.4}
-    image: ${POSTGRES_IMAGE:-eteamacr.azurecr.io/e-team/postgres}:${POSTGRES_IMAGE_VERSION:-4.0.0}
+    image: ${POSTGRES_IMAGE:-eteamacr.azurecr.io/e-team/postgres}:${POSTGRES_IMAGE_VERSION:-4.0.6}
     volumes:
       - ${DATA_PATH_HOST}/postgres:/var/lib/postgresql/data
       - ${POSTGRES_ENTRYPOINT_INITDB}:/docker-entrypoint-initdb.d
@@ -413,7 +413,7 @@ services:
   ### Redis ################################################
   redis:
     build: "${COMPOSE_LARADOCK_PACKAGE_PATH}/redis"
-    image: ${REDIS_IMAGE:-eteamacr.azurecr.io/e-team/redis}:${REDIS_IMAGE_VERSION:-4.0.0}
+    image: ${REDIS_IMAGE:-eteamacr.azurecr.io/e-team/redis}:${REDIS_IMAGE_VERSION:-4.0.6}
     volumes:
       - ${DATA_PATH_HOST}/redis:/data
     ports:
@@ -424,7 +424,7 @@ services:
   ### Mailhog ################################################
   mailhog:
     build: '${COMPOSE_LARADOCK_PACKAGE_PATH}/mailhog'
-    image: ${MAILHOG_IMAGE:-eteamacr.azurecr.io/e-team/mailhog}:${MAILHOG_IMAGE_VERSION:-4.0.0}
+    image: ${MAILHOG_IMAGE:-eteamacr.azurecr.io/e-team/mailhog}:${MAILHOG_IMAGE_VERSION:-4.0.6}
     ports:
       - '1025:1025'
       - '8025:8025'
