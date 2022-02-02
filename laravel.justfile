@@ -12,6 +12,10 @@ is-a-mixed-service-stack := env_var_or_default('COMPOSE_SERVICE_STACK_MIXED_WITH
 default:
   @just --list
 
+# Show available commands
+list:
+  @just --list
+
 alias help := default
 
 # docker-compose shorthand

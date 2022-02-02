@@ -3,14 +3,14 @@
 selected_service="${1:-false}"
 
 ALL_SERVICES=$(cat <<'HERE_DOC'
-nginx|4.0.0
-mysql|4.0.0
-postgres|4.0.0
-redis|4.0.0
-mailhog|4.0.0
-php-fpm|4.0.0
-php-worker|4.0.0
-workspace|4.0.0
+nginx|4.0.6
+mysql|4.0.6
+postgres|4.0.6
+redis|4.0.6
+mailhog|4.0.6
+php-fpm|4.0.6
+php-worker|4.0.6
+workspace|4.0.6
 HERE_DOC
 )
 

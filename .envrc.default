@@ -182,6 +182,13 @@ if [[ "${CREATE_ALIAS_FOR_DOCKERIZED_COMPOSER:-false}" == 'true' ]] \
   echo -e  ">> INFO:${c_reset}  'bin/composer' alias created for 'bin/dockerized-composer'"
 fi
 
+echo -e "${c_lgreen}"
+echo -e  ">> INFO:${c_reset}  php base image versions"
+echo -e  "            ["
+echo -e  "              WORKSPACE_BASE_IMAGE_TAG_PREFIX: '${WORKSPACE_BASE_IMAGE_TAG_PREFIX}'"
+echo -e  "              PHP_FPM_BASE_IMAGE_TAG_PREFIX:   '${PHP_FPM_BASE_IMAGE_TAG_PREFIX}'"
+echo -e  "            ]"
+
 # intentionally linebreak
 echo
 
