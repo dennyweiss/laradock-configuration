@@ -3,14 +3,14 @@
 selected_service="${1:-false}"
 
 ALL_SERVICES=$(cat <<'HERE_DOC'
-nginx|4.0.6
-mysql|4.0.6
-postgres|4.0.6
-redis|4.0.6
-mailhog|4.0.6
-php-fpm|4.0.6
-php-worker|4.0.6
-workspace|4.0.6
+nginx|4.0.9
+mysql|4.0.9
+postgres|4.0.9
+redis|4.0.9
+mailhog|4.0.9
+php-fpm|4.0.9
+php-worker|4.0.9
+workspace|4.0.9
 HERE_DOC
 )
 
@@ -42,7 +42,7 @@ HERE_DOC
 
 resolve_repository() {
     service="${1}"
-    service_image="$(docker compose config --format json | jq -r ".services.${service}.image")"
+    service_image="$(docker compose config --format json | jq -r ".services.\"${service}\".image")"
 
     get "${service_image}" 0 ':'
 }
@@ -103,6 +103,8 @@ execute() {
     fi
 
     if [[ "${DRY_RUN:-false}" == 'false' ]];then
+      echo
+      echo "INFO:  Build: ${single_service_blueprint}"
       eval "${build_command}"
     fi
 
