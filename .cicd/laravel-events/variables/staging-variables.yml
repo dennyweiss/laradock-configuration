@@ -1,0 +1,12 @@
+variables:
+  # <// kept as reference variables are defined in project-variables
+  #     STAGING_ENV_NAME: "Staging"
+  #     STAGING_ENV_USER: ""
+  #     STAGING_ENV_HOST: ""
+  #     STAGING_ENV_SITE_PATH: ""
+  #     STAGING_ENV_URL: ""
+  #     STAGING_ENV_SSH_KNOWN_HOST_ENTRY: ""
+  #     STAGING_ENV_SSH_PUBLIC_KEY: ""
+  #     STAGING_ENV_PRIVATE_KEY_SECURE_FILENAME: ""
+  # //>
+  STAGING_ENV_SSH_URL: '$(STAGING_ENV_USER)@$(STAGING_ENV_HOST)'

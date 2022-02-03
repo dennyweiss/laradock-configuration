@@ -1,0 +1,106 @@
+#!/usr/bin/env bash
+
+set -e
+set -o pipefail
+
+SCRIPT="${0}"
+SCRIPT_NAME="$(basename "${SCRIPT}")"
+SCRIPT_PATH="$(dirname "${SCRIPT}")"
+
+DESCRIBE_SUBCOMMAND_DEFINITION="${DESCRIBE_SUBCOMMAND_DEFINITION:-false}"
+
+# /////////////////////////////////////////////////////////////////////////////
+# // Define variables that are used by subcommand definition //////////////////
+RUN_MODE='docker'
+VALID_ARGUMENT="${VALID_ARGUMENT:-undefined}"
+
+# /////////////////////////////////////////////////////////////////////////////
+# // Print current arguments //////////////////////////////////////////////////
+# shellcheck disable=SC2199
+if [[ "${@}" =~ '--verbose=true' ]]; then
+    echo -e "INFO:  '''Passed arguments:'''"
+    for argument in "${@}"; do
+        echo -e "       '${argument}'"
+    done
+    echo -e "       '''''''''''''''''''''''"
+fi
+
+# /////////////////////////////////////////////////////////////////////////////
+# // Parse command line arguments /////////////////////////////////////////////
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        # default arguments
+        --describe)
+            DESCRIBE_SUBCOMMAND_DEFINITION=true
+            ;;
+        --verbose=true | --verbose=false)
+            VERBOSE="${1#*=}"
+            ;;
+        --run-mode=*)
+            RUN_MODE="${1#*=}"
+            ;;
+
+        # arguments
+        --valid-argument=*)
+            VALID_ARGUMENT="${1#*=}"
+            ;;
+
+        # unsupported argument
+        *)
+            echo "ERROR: '${1}' argument is not supported"
+            exit 1
+            ;;
+    esac
+    shift
+done
+
+if [[ "${RUN_MODE}" != 'docker' ]]; then
+    echo "ERROR: run mode '${RUN_MODE}' not supported"
+    exit 1
+fi
+
+# /////////////////////////////////////////////////////////////////////////////
+# // Describe what current subcommand definition does /////////////////////////
+subcommand_definition::describe() {
+    subcommand_definition_description="$(
+        cat <<DESC
+       description:
+         this work performed is performed by this subcommand definition file
+
+       default arguments:
+         --describe                        # option for showing this message
+         --verbose=[true|false]            # defaults to false
+         --run-mode=[docker|local]
+
+       arguments:
+         --valid-argument=''               # some placeholder variable
+
+       default variables:
+         \$SCRIPT                          '${SCRIPT}'
+         \$SCRIPT_NAME                     '${SCRIPT_NAME}'
+         \$SCRIPT_PATH                     '${SCRIPT_PATH}'
+         \$DESCRIBE_SUBCOMMAND_DEFINITION  '${DESCRIBE_SUBCOMMAND_DEFINITION}'
+         \$RUN_MODE                        '${RUN_MODE}'
+         \$VERBOSE                         '${VERBOSE}'
+
+       resolved variables:
+         \$VALID_ARGUMENT                '${VALID_ARGUMENT}'
+DESC
+    )"
+    echo -e "\n${subcommand_definition_description}\n"
+}
+
+if [[ "${DESCRIBE_SUBCOMMAND_DEFINITION}" == 'true' ]]; then
+    subcommand_definition::describe
+    exit 0
+fi
+
+if [[ "${VERBOSE:-false}" == 'true' ]]; then
+    subcommand_definition::describe
+fi
+
+# /////////////////////////////////////////////////////////////////////////////
+# // Execute subcommand definition work ///////////////////////////////////////
+(
+    echo "////>- do work"
+)

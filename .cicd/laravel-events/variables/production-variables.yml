@@ -1,0 +1,12 @@
+variables:
+  # <// kept as reference variables are defined in project-variables
+  #  PRODUCTION_ENV_NAME: "Production"
+  #  PRODUCTION_ENV_USER: ""
+  #  PRODUCTION_ENV_HOST: ""
+  #  PRODUCTION_ENV_SITE_PATH: ""
+  #  PRODUCTION_ENV_URL: ""
+  #  PRODUCTION_ENV_SSH_KNOWN_HOST_ENTRY: ""
+  #  PRODUCTION_ENV_SSH_PUBLIC_KEY: ""
+  #  PRODUCTION_ENV_PRIVATE_KEY_SECURE_FILENAME: ""
+  # //>
+  PRODUCTION_ENV_SSH_URL: '$(PRODUCTION_ENV_USER)@$(PRODUCTION_ENV_HOST)'

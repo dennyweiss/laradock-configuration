@@ -1,0 +1,205 @@
+stages:
+  - stage: 'Release_Staging'
+    displayName: 'Release to Staging'
+    dependsOn:
+      - 'Build'
+    condition: and(eq(variables['stages_enabled__stage_release_staging'], true), succeeded())
+    jobs:
+      - deployment: 'release_to_staging'
+        timeoutInMinutes: 5
+        cancelTimeoutInMinutes: 1
+        pool:
+          vmImage: 'ubuntu-18.04'
+        environment: '$(STAGING_ENV_NAME)'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - bash: |
+                    echo "##vso[task.setvariable variable=ARTIFACT_BUILD_TAG]Build-${ARTIFACT_BUILD_ID}"
+                  displayName: 'Preparation: evaluate ARTIFACT_BUILD_TAG'
+
+                - bash: |
+                    echo "##vso[task.setvariable variable=ARTIFACT_TEMPORARY_DIRECTORY]/tmp/artifacts-$(date "+%Y%m%d%H%M%S")"
+                  displayName: 'Preparation: evaluate ARTIFACT_TEMPORARY_DIRECTORY'
+
+                - bash: |
+                    echo "##vso[task.setvariable variable=ARTIFACT_RELATIVE_PATH]${ARTIFACT_BASE_DIRECTORY}/${APP_TENANT}-${ARTIFACT_BUILD_ID}"
+                  displayName: 'Preparation: evaluate ARTIFACT_RELATIVE_PATH'
+
+                # //////////////////////////////////////////////////////////////////////
+                # // DEBUG
+
+                - bash: |
+                    echo "VERSION                                                   = '${ARTIFACT_BUILD_TAG}'"
+                    echo ''
+                    echo "STAGING_ENV_SSH_KNOWN_HOST_ENTRY                          = '$(STAGING_ENV_SSH_KNOWN_HOST_ENTRY)'"
+                    echo ''
+                    echo "STAGING_ENV_USER                                          = '$(STAGING_ENV_USER)'"
+                    echo "STAGING_ENV_HOST                                          = '$(STAGING_ENV_HOST)'"
+                    echo "STAGING_ENV_SSH_URL                                       = '$(STAGING_ENV_SSH_URL)'"
+                    echo ''
+                    echo "STAGING_ENV_SITE_PATH                                     = '$(STAGING_ENV_SITE_PATH)'"
+                    echo "STAGING_ENV_URL                                           = '$(STAGING_ENV_URL)'"
+                    echo ''
+                    echo "db_migration_enabled__stages_release                      = '$(db_migration_enabled__stages_release)'"
+                    echo "db_backup_enabled__stage_staging                          = '$(db_backup_enabled__stage_staging)'"
+                    echo "app_maintenance_during_deployment_enabled__stage_staging  = '$(app_maintenance_during_deployment_enabled__stage_staging)'"
+                    echo ''
+                    echo "\$ARTIFACT_DIRECTORY                                      = '${ARTIFACT_DIRECTORY}'"
+                    echo "\$ARTIFACT_TEMPORARY_DIRECTORY                            = '${ARTIFACT_TEMPORARY_DIRECTORY}'"
+                    echo "\$ARTIFACT_RELATIVE_PATH                                  = '${ARTIFACT_RELATIVE_PATH}'"
+                    echo "\$ARTIFACT_BASE_DIRECTORY                                 = '${ARTIFACT_BASE_DIRECTORY}'"
+                    echo "\$ARTIFACT_VERSION                                        = '${ARTIFACT_VERSION}'"
+                    echo "\$ARTIFACT_VERSION_TAG                                    = '${ARTIFACT_VERSION_TAG}'"
+                    echo "\$ARTIFACT_BUILD_ID                                       = '${ARTIFACT_BUILD_ID}'"
+                    echo "\$ARTIFACT_BUILD_TAG                                      = '${ARTIFACT_BUILD_TAG}'"
+                    echo "\$ARTIFACT_TIMESTAMP                                      = '${ARTIFACT_TIMESTAMP}'"
+                    echo "\$ARTIFACT_ARTIFACT_EXCLUDES_FILE                         = '${ARTIFACT_EXCLUDES_FILE}'"
+                    echo ''
+                    echo "\$DO_ARTIFACTS_SPACES_KEY                                 = '***secret***'"
+                    echo "\$DO_ARTIFACTS_SPACES_SECRET                              = '***secret***'"
+                    echo "\$DO_ARTIFACTS_SPACES_REGION                              = '${DO_ARTIFACTS_SPACES_REGION}'"
+                    echo "\$DO_ARTIFACTS_SPACES_BUCKET                              = '${DO_ARTIFACTS_SPACES_BUCKET}'"
+                    echo "\$DO_ARTIFACTS_SPACES_ENDPOINT                            = '${DO_ARTIFACTS_SPACES_ENDPOINT}'"
+                  displayName: 'DEBUG'
+                  condition: eq(variables['debug_mode__stage_staging_deployment'], true)
+
+                # //////////////////////////////////////////////////////////////////////
+                # // Preparation
+                - task: InstallSSHKey@0
+                  inputs:
+                    knownHostsEntry: $(STAGING_ENV_SSH_KNOWN_HOST_ENTRY)
+                    sshPublicKey: $(STAGING_ENV_SSH_PUBLIC_KEY)
+                    sshKeySecureFile: $(STAGING_ENV_PRIVATE_KEY_SECURE_FILENAME)
+                  displayName: 'Preparation: install ssh key'
+
+                - bash: |
+                    mkdir -p "/home/$(STAGING_ENV_USER)/$(ARTIFACT_RELATIVE_PATH)"
+                    mkdir -p "$(ARTIFACT_TEMPORARY_DIRECTORY)"
+                  displayName: 'Preparation: ensure required paths exist'
+
+                # //////////////////////////////////////////////////////////////////////
+                # // Deployment
+
+                - bash: |
+                    ssh $(STAGING_ENV_SSH_URL) << SSH_COMMAND
+                      php artifact fetch \
+                        "$(APP_TENANT)" \
+                        "$(ARTIFACT_BUILD_ID)" \
+                        "/home/$(STAGING_ENV_USER)/$(ARTIFACT_RELATIVE_PATH)" \
+                        --tempDirectory="$(ARTIFACT_TEMPORARY_DIRECTORY)"
+                    SSH_COMMAND
+                  displayName: 'Deployment: install new version'
+
+                - bash: |
+                    ssh $(STAGING_ENV_SSH_URL) << SSH_COMMAND
+                      cd $(ARTIFACT_RELATIVE_PATH)
+                      ln -sf ../.env .env
+                    SSH_COMMAND
+                  displayName: 'Deployment: link environment file to current version'
+
+                - bash: |
+                    ssh $(STAGING_ENV_SSH_URL) << SSH_COMMAND
+                      cd $(ARTIFACT_RELATIVE_PATH)
+                      php artisan storage:link --relative
+                    SSH_COMMAND
+                  displayName: 'Deployment: link storage'
+
+                - bash: |
+                    ssh $(STAGING_ENV_SSH_URL) << SSH_COMMAND
+                      cd $(ARTIFACT_RELATIVE_PATH)
+                      php artisan optimize:clear
+                    SSH_COMMAND
+                  displayName: 'Deployment: clear caches'
+
+                - bash: |
+                    ssh $(STAGING_ENV_SSH_URL) << SSH_COMMAND
+                      cd $(ARTIFACT_RELATIVE_PATH)
+                      php artisan polling:init
+                    SSH_COMMAND
+                  displayName: 'Deployment: initialize polling'
+
+                - bash: |
+                    ssh $(STAGING_ENV_SSH_URL) << SSH_COMMAND
+                      sudo /usr/bin/supervisorctl stop all
+                    SSH_COMMAND
+                  displayName: 'Deployment: stop supervisorctl queue'
+
+                - bash: |
+                    ssh $(STAGING_ENV_SSH_URL) << SSH_COMMAND
+                      cd $(STAGING_ENV_SITE_PATH)
+                      php artisan backup:run --only-db --no-interaction --timeout=120
+                    SSH_COMMAND
+                  displayName: 'Preparation: backup db'
+                  condition: and(succeeded(), eq(variables['db_backup_enabled__stage_staging'], true))
+
+                - bash: |
+                    ssh $(STAGING_ENV_SSH_URL) << SSH_COMMAND
+                      cd $(STAGING_ENV_SITE_PATH)
+                      php artisan down --render="errors::503" --retry=60
+                    SSH_COMMAND
+                  displayName: 'Preparation: set application into maintenance'
+                  condition: and(succeeded(), eq(variables['app_maintenance_during_deployment_enabled__stage_staging'], true))
+
+                - bash: |
+                    ssh $(STAGING_ENV_SSH_URL) << SSH_COMMAND
+                      cd $(ARTIFACT_RELATIVE_PATH)
+                      php artisan migrate --force
+                    SSH_COMMAND
+                  displayName: 'Deployment: migrate database'
+                  condition: and(succeeded(), eq(variables['db_migration_enabled__stages_release'], true))
+
+                - bash: |
+                    ssh $(STAGING_ENV_SSH_URL) << SSH_COMMAND
+
+                      if ! [[ -L $(STAGING_ENV_SITE_PATH) ]]; then
+                        rm -rf $(STAGING_ENV_SITE_PATH)
+                      fi
+
+                      ln -nsf $(ARTIFACT_RELATIVE_PATH) $(STAGING_ENV_SITE_PATH)
+                    SSH_COMMAND
+                  displayName: 'Deployment: link app'
+
+                - bash: |
+                    ssh $(STAGING_ENV_SSH_URL) << SSH_COMMAND
+                      cd $(ARTIFACT_RELATIVE_PATH)
+                      php artisan up
+                    SSH_COMMAND
+                  displayName: 'Deployment: boot up application'
+
+                - bash: |
+                    ssh $(STAGING_ENV_SSH_URL) << SSH_COMMAND
+                    (
+                      flock -w 10 9 || exit 1
+                      echo 'Restarting FPM...';
+                      sudo -S service php8.0-fpm reload
+                      sudo -S service nginx reload
+                    ) 9>/tmp/fpmlock-$(STAGING_ENV_USER)
+                    SSH_COMMAND
+                  displayName: 'Deployment: restart php fpm for opcache invalidation'
+
+                - bash: |
+                    ssh $(STAGING_ENV_SSH_URL) << SSH_COMMAND
+                      cd $(ARTIFACT_RELATIVE_PATH)
+                      php artisan version:update-timestamp --deployed="$(date +%s)"
+                      php artisan version:refresh
+                    SSH_COMMAND
+                  displayName: 'Deployment: update version file'
+
+                - bash: |
+                    ssh $(STAGING_ENV_SSH_URL) << SSH_COMMAND
+                      sudo /usr/bin/supervisorctl start all
+                    SSH_COMMAND
+                  displayName: 'Deployment: (re-) start supervisorctl queue'
+
+                # //////////////////////////////////////////////////////////////////////
+                # // Test
+
+                - bash: |
+                    if [[ -n "${STAGING_ENV_URL_CREDENTIALS}" ]]; then
+                      curl -fsSL --user "${STAGING_ENV_URL_CREDENTIALS}" "${STAGING_ENV_URL}"
+                    else
+                      curl -fsSL "${STAGING_ENV_URL}"
+                    fi
+                  displayName: 'Test: is application up and running'

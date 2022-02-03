@@ -1,0 +1,135 @@
+#!/usr/bin/env bash
+
+set -e
+set -o pipefail
+
+SCRIPT="${0}"
+SCRIPT_NAME="$(basename "${SCRIPT}")"
+SCRIPT_PATH="$(dirname "${SCRIPT}")"
+
+DESCRIBE_SUBCOMMAND_DEFINITION="${DESCRIBE_SUBCOMMAND_DEFINITION:-false}"
+
+# /////////////////////////////////////////////////////////////////////////////
+# // Define variables that are used by subcommand definition //////////////////
+RUN_MODE='local'
+
+# /////////////////////////////////////////////////////////////////////////////
+# // Print current arguments //////////////////////////////////////////////////
+# shellcheck disable=SC2199
+if [[ "${@}" =~ '--verbose=true' ]]; then
+    echo -e "INFO:  '''Passed arguments:'''"
+    for argument in "${@}"; do
+        echo -e "       '${argument}'"
+    done
+    echo -e "       '''''''''''''''''''''''"
+fi
+
+# /////////////////////////////////////////////////////////////////////////////
+# // Parse command line arguments /////////////////////////////////////////////
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        # default arguments
+        --describe)
+            DESCRIBE_SUBCOMMAND_DEFINITION=true
+            ;;
+        --verbose=true | --verbose=false)
+            VERBOSE="${1#*=}"
+            ;;
+        --run-mode=*)
+            # @info intentionally dont apply run mode because it does not make any sense to run in docker container
+            ;;
+
+        # unsupported argument
+        *)
+            # @info intentionally let pass through all other arguments
+            ;;
+    esac
+    shift
+done
+
+# /////////////////////////////////////////////////////////////////////////////
+# // Describe what current subcommand definition does /////////////////////////
+subcommand_definition::describe() {
+    subcommand_definition_description="$(
+        cat <<DESC
+       description:
+         list available subcommand definitions
+
+       default arguments:
+         --describe                      # option for showing this message
+         --verbose=[true|false]          # defaults to false
+         --run-mode=[docker|local]
+
+       arguments:
+         --
+
+       default variables:
+         \$SCRIPT                           '${SCRIPT}'
+         \$SCRIPT_NAME                      '${SCRIPT_NAME}'
+         \$SCRIPT_PATH                      '${SCRIPT_PATH}'
+         \$DESCRIBE_SUBCOMMAND_DEFINITION   '${DESCRIBE_SUBCOMMAND_DEFINITION}'
+         \$RUN_MODE                         '${RUN_MODE}'
+         \$VERBOSE                          '${VERBOSE}'
+
+       resolved variables:
+         --
+DESC
+    )"
+    echo -e "\n${subcommand_definition_description}\n"
+}
+
+subcommand_definition::should_skip_listing() {
+    local file_path="${1}"
+    local type="${2}"
+    local current_script_name="${3}"
+    local result='false'
+    local type_pattern="/${type}/\*"
+
+    if [[  "${file_path}" =~ ${type_pattern} ]] \
+        || [[ "${file_path}" =~ ${current_script_name} ]] \
+        || [[ "${file_path}" =~ '.gitkeep' ]]
+    then
+      result='true'
+    fi
+
+    echo "${result}"
+}
+
+if [[ "${DESCRIBE_SUBCOMMAND_DEFINITION}" == 'true' ]]; then
+    subcommand_definition::describe
+    exit 0
+fi
+
+if [[ "${VERBOSE:-false}" == 'true' ]]; then
+    subcommand_definition::describe
+fi
+
+# /////////////////////////////////////////////////////////////////////////////
+# // Execute subcommand definition work ///////////////////////////////////////
+(
+    type="steps"
+    echo "//>>>  list ${type} subcommand definitions"
+    echo
+    for file in "${SCRIPT_PATH}"/steps/*; do
+        # shellcheck disable=SC1073
+        if [[ "$(subcommand_definition::should_skip_listing "${file}" "${type}" "${SCRIPT_NAME}")" == 'true' ]]; then
+            continue
+        fi
+
+        echo "       - '${file}'"
+    done
+)
+echo ''
+(
+    type="tasks"
+    echo "//>>>  list ${type} subcommand definitions"
+    echo
+    for file in "${SCRIPT_PATH}"/tasks/*; do
+        # shellcheck disable=SC1073
+        if [[ "$(subcommand_definition::should_skip_listing "${file}" "${type}" "${SCRIPT_NAME}")" == 'true' ]]; then
+            continue
+        fi
+
+        echo "       - '${file}'"
+    done
+)

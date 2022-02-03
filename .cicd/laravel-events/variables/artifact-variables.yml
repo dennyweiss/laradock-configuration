@@ -1,0 +1,9 @@
+variables:
+  ARTIFACT_BASE_DIRECTORY: 'artifacts-store'
+  ARTIFACT_DIRECTORY: '.artifacts'
+  ARTIFACT_VERSION: '$(Build.SourceVersion)'
+  ARTIFACT_VERSION_TAG: 'unknown'
+  ARTIFACT_BUILD_ID: '$(Build.BuildId)'
+  ARTIFACT_BUILD_TAG: 'unknown'
+  ARTIFACT_TIMESTAMP: 'unknown'
+  ARTIFACT_EXCLUDES_FILE: '.artifact.excludes'

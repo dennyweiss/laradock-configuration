@@ -1,0 +1,170 @@
+#!/usr/bin/env bash
+
+set -e
+set -o pipefail
+
+SCRIPT="${0}"
+SCRIPT_NAME="$(basename "${SCRIPT}")"
+SCRIPT_PATH="$(dirname "${SCRIPT}")"
+
+DESCRIBE_SUBCOMMAND_DEFINITION="${DESCRIBE_SUBCOMMAND_DEFINITION:-false}"
+
+# /////////////////////////////////////////////////////////////////////////////
+# // Define variables that are used by subcommand definition //////////////////
+RUN_MODE='local'
+
+PACKAGES_DIRECTORY="packages"
+PACKAGE_LOCAL_VENDOR_DIRECTORY="vendor"
+
+RESULTS_DIRECTORY='../../../.test-results'
+RESULTS_FILENAME_PREFIX='TEST-'
+RESULTS_FILENAME_SUFFIX='-results.xml'
+
+# /////////////////////////////////////////////////////////////////////////////
+# // Print current arguments //////////////////////////////////////////////////
+# shellcheck disable=SC2199
+if [[ "${@}" =~ '--verbose=true' ]]; then
+    echo -e "INFO:  '''Passed arguments:'''"
+    for argument in "${@}"; do
+        echo -e "       '${argument}'"
+    done
+    echo -e "       '''''''''''''''''''''''"
+fi
+
+# /////////////////////////////////////////////////////////////////////////////
+# // Parse command line arguments /////////////////////////////////////////////
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        # default arguments
+        --describe)
+            DESCRIBE_SUBCOMMAND_DEFINITION=true
+            ;;
+        --verbose=true | --verbose=false)
+            VERBOSE="${1#*=}"
+            ;;
+        --run-mode=*)
+            RUN_MODE="${1#*=}"
+            ;;
+
+        # arguments
+        --packages-directory=*)
+            PACKAGES_DIRECTORY="${1#*=}"
+            ;;
+        --package-local-vendor-directory=*)
+            PACKAGE_LOCAL_VENDOR_DIRECTORY="${1#*=}"
+            ;;
+        --results-directory=*)
+            RESULTS_DIRECTORY="${1#*=}"
+            ;;
+        --results-filename-prefix=*)
+            RESULTS_FILENAME_PREFIX="${1#*=}"
+            ;;
+        --results-filename-suffix=*)
+            RESULTS_FILENAME_SUFFIX="${1#*=}"
+            ;;
+
+        # unsupported argument
+        *)
+            echo "ERROR: '${1}' argument is not supported"
+            exit 1
+            ;;
+    esac
+    shift
+done
+
+# /////////////////////////////////////////////////////////////////////////////
+# // Describe what current subcommand definition does /////////////////////////
+subcommand_definition::describe() {
+    subcommand_definition_description="$(
+        cat <<DESC
+       description:
+         run phpunit test for local packages (mono repo style)
+
+       default arguments:
+         --describe                           # option for showing this message
+         --verbose=[true|false]               # defaults to false
+         --run-mode=[docker|local]
+
+       arguments:
+         --packages-directory=''              # defaults to \$PACKAGES_DIRECTORY='packages'
+         --package-local-vendor-directory=''  # defaults to \$PACKAGE_LOCAL_VENDOR_DIRECTORY='vendor'
+         --results-directory=''               # defaults to \$RESULTS_DIRECTORY='../../.test-results'
+         --results-filename-prefix=''         # defaults to \$RESULTS_FILENAME_PREFIX='TEST-'
+         --results-filename-suffix=''         # defaults to \$RESULTS_FILENAME_SUFFIX='-results.xml'
+
+       default variables:
+         \$SCRIPT                             '${SCRIPT}'
+         \$SCRIPT_NAME                        '${SCRIPT_NAME}'
+         \$SCRIPT_PATH                        '${SCRIPT_PATH}'
+         \$DESCRIBE_SUBCOMMAND_DEFINITION                      '${DESCRIBE_SUBCOMMAND_DEFINITION}'
+         \$RUN_MODE                      '${RUN_MODE}'
+         \$VERBOSE                            '${VERBOSE}'
+
+       resolved variables:
+         \$PACKAGES_DIRECTORY                 '${PACKAGES_DIRECTORY}'
+         \$PACKAGE_LOCAL_VENDOR_DIRECTORY     '${PACKAGE_LOCAL_VENDOR_DIRECTORY}'
+         \$RESULTS_DIRECTORY                  '${RESULTS_DIRECTORY}'
+         \$RESULTS_FILENAME_PREFIX            '${RESULTS_FILENAME_PREFIX}'
+         \$RESULTS_FILENAME_SUFFIX            '${RESULTS_FILENAME_SUFFIX}'
+DESC
+    )"
+    echo -e "\n${subcommand_definition_description}\n"
+}
+
+if [[ "${DESCRIBE_SUBCOMMAND_DEFINITION}" == 'true' ]]; then
+    subcommand_definition::describe
+    exit 0
+fi
+
+if [[ "${VERBOSE:-false}" == 'true' ]]; then
+    subcommand_definition::describe
+fi
+
+# /////////////////////////////////////////////////////////////////////////////
+# // Execute subcommand definition work ///////////////////////////////////////
+
+subcommand_definition::resolve_vendor_name() {
+    basename "$(dirname "${1}")"
+}
+
+subcommand_definition::resolve_package_name() {
+    basename "${1}"
+}
+
+subcommand_definition::resolve_package_identifier() {
+    echo "$(subcommand_definition::resolve_vendor_name "${1}")/$(subcommand_definition::resolve_package_name "${1}")"
+}
+
+subcommand_definition::stringify() {
+    echo "${1/\//--}"
+}
+
+echo "//>>>  [php] run phpunit test for local packages"
+for package_path in "${PACKAGES_DIRECTORY}/"**/*; do
+
+    (
+        package_identifier="$(subcommand_definition::resolve_package_identifier "${package_path}")"
+        test_result_file_path="${RESULTS_DIRECTORY}/${RESULTS_FILENAME_PREFIX}$(subcommand_definition::stringify "${package_identifier}")${RESULTS_FILENAME_SUFFIX}"
+        echo "//>>>> [php] run test for '${package_identifier}'"
+        cd "${package_path}" &>/dev/null || ( echo -e "ERROR: package '${package_identifier}'\n       does not exist at path: '${package_path}'" && exit 1 )
+
+        echo "        - install composer dependencies"
+        composer install -o
+        [[ "${VERBOSE:-false}" == 'true' ]] && echo "INFO:  composer dependencies installed"
+
+        echo "        - run tests & store results in '${test_result_file_path}'"
+        php -d short_open_tag=off ./vendor/phpunit/phpunit/phpunit -v \
+            --colors=never \
+            --stderr \
+            --log-junit \
+            "${test_result_file_path}"
+
+        echo "        - cleanup dependencies"
+        if [[ -d "${PACKAGE_LOCAL_VENDOR_DIRECTORY}" ]]; then
+            rm -rf "${PACKAGE_LOCAL_VENDOR_DIRECTORY}"
+            echo "INFO:  '${PACKAGE_LOCAL_VENDOR_DIRECTORY}' removed"
+        fi
+        echo
+    )
+
+done

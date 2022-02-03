@@ -1,0 +1,332 @@
+stages:
+  - stage: 'Build'
+    displayName: Build
+    condition: eq(variables['stages_enabled__stage_build'], true)
+    jobs:
+      - job: 'from_source_to_artifact'
+        timeoutInMinutes: 16
+        cancelTimeoutInMinutes: 2
+        pool:
+          vmImage: 'ubuntu-18.04'
+        steps:
+          - script: |
+              sudo update-alternatives --set php /usr/bin/php$(phpVersion)
+              sudo update-alternatives --set phar /usr/bin/phar$(phpVersion)
+              sudo update-alternatives --set phpdbg /usr/bin/phpdbg$(phpVersion)
+              sudo update-alternatives --set php-cgi /usr/bin/php-cgi$(phpVersion)
+              sudo update-alternatives --set phar.phar /usr/bin/phar.phar$(phpVersion)
+              php -version
+            displayName: 'Use PHP version $(phpVersion)'
+
+          - bash: |
+              NEW_ARTIFACT_TIMESTAMP="$(date "+%s")"
+              echo "##vso[task.setvariable variable=ARTIFACT_TIMESTAMP]${NEW_ARTIFACT_TIMESTAMP}"
+            displayName: 'Preparation: evaluate ARTIFACT_TIMESTAMP'
+
+          - bash: |
+              echo "##vso[task.setvariable variable=ARTIFACT_VERSION_TAG]Commit-${ARTIFACT_VERSION}"
+            displayName: 'Preparation: evaluate ARTIFACT_VERSION & ARTIFACT_VERSION_TAG'
+
+          - bash: |
+              echo "##vso[task.setvariable variable=ARTIFACT_BUILD_TAG]Build-${ARTIFACT_BUILD_ID}"
+            displayName: 'Preparation: evaluate ARTIFACT_BUILD_TAG'
+
+          - bash: |
+              echo "##vso[task.setvariable variable=ARTIFACT_TEMPORARY_DIRECTORY]/tmp/artifacts-$(date "+%Y%m%d%H%M%S")"
+            displayName: 'Preparation: evaluate ARTIFACT_TEMPORARY_DIRECTORY'
+
+          # //////////////////////////////////////////////////////////////////////
+          # // DEBUG
+
+          - bash: |
+              echo "\$COMPOSE_PROJECT_NAME                            = '${COMPOSE_PROJECT_NAME}'"
+              echo "\$APP_TENANT                                      = '${APP_TENANT}'"
+              echo "\$APP_LOCALE                                      = '${APP_LOCALE}'"
+              echo "\$APP_FALLBACK_LOCALE                             = '${APP_FALLBACK_LOCALE}'"
+              echo "\$APP_CODE_PATH_HOST                              = '${APP_CODE_PATH_HOST}'"
+              echo "\$APP_CODE_PATH_CONTAINER                         = '${APP_CODE_PATH_CONTAINER}'"
+              echo "\$APP_CODE_CONTAINER_FLAG                         = '${APP_CODE_CONTAINER_FLAG}'"
+              echo "\$DATA_PATH_HOST                                  = '${DATA_PATH_HOST}'"
+              echo "\$COMPOSE_FILE                                    = '${COMPOSE_FILE}'"
+              echo "\$COMPOSE_USER                                    = '${COMPOSE_USER}'"
+              echo "\$COMPOSE_SERVICE_STACK                           = '${COMPOSE_SERVICE_STACK}'"
+              echo "\$COMPOSE_LARADOCK_PACKAGE_PATH                   = '${COMPOSE_LARADOCK_PACKAGE_PATH}'"
+              echo "\$COMPOSE_LARADOCK_CONFIGURATION_PACKAGE_PATH     = '${COMPOSE_LARADOCK_CONFIGURATION_PACKAGE_PATH}'"
+              echo "\$COMPOSE_DOCKER_CLI_BUILD                        = '${COMPOSE_DOCKER_CLI_BUILD}'"
+              echo "\$DOCKER_BUILDKIT                                 = '${DOCKER_BUILDKIT}'"
+              echo "\$PHP_VERSION                                     = '${PHP_VERSION}'"
+              echo "\$WORKSPACE_BASE_IMAGE_TAG_PREFIX                 = '${WORKSPACE_BASE_IMAGE_TAG_PREFIX}'"
+              echo "\$WORKSPACE_PUID                                  = '${WORKSPACE_PUID}'"
+              echo "\$WORKSPACE_PGID                                  = '${WORKSPACE_PGID}'"
+              echo "\$PHP_FPM_BASE_IMAGE_TAG_PREFIX                   = '${PHP_FPM_BASE_IMAGE_TAG_PREFIX}'"
+              echo "\$PHP_FPM_PUID                                    = '${PHP_FPM_PUID}'"
+              echo "\$PHP_FPM_PGID                                    = '${PHP_FPM_PGID}'"
+              echo "\$PHP_FPM_CONF_PATH                               = '${PHP_FPM_CONF_PATH}'"
+              echo "\$PHP_WORKER_PUID                                 = '${PHP_WORKER_PUID}'"
+              echo "\$PHP_WORKER_PGID                                 = '${PHP_WORKER_PGID}'"
+              echo "\$PHP_WORKER_CONF_PATH_PREFIX                     = '${PHP_WORKER_CONF_PATH_PREFIX}'"
+              echo "\$NGINX_HOST_LOG_PATH                             = '${NGINX_HOST_LOG_PATH}'"
+              echo "\$NGINX_SSL_PATH                                  = '${NGINX_SSL_PATH}'"
+              echo "\$NGINX_SITES_PATH                                = '${NGINX_SITES_PATH}'"
+              echo "\$NGINX_CONF_PATH                                 = '${NGINX_CONF_PATH}'"
+              echo "\$NGINX_H5PB_PATH                                 = '${NGINX_H5PB_PATH}'"
+              echo "\$MYSQL_CONF_PATH_PREFIX                          = '${MYSQL_CONF_PATH_PREFIX}'"
+              echo ''
+              echo "\$SOURCE_REPOSITORY_ID                            = '${SOURCE_REPOSITORY_ID}'"
+              echo "\$SOURCE_REPOSITORY_NAME                          = '${SOURCE_REPOSITORY_NAME}'"
+              echo "\$SOURCE_REPOSITORY_URI                           = '${SOURCE_REPOSITORY_URI}'"
+              echo "\$SOURCE_REPOSITORY_BRANCH_NAME                   = '${SOURCE_REPOSITORY_BRANCH_NAME}'"
+              echo ''
+              echo "\$ARTIFACT_DIRECTORY                              = '${ARTIFACT_DIRECTORY}'"
+              echo "\$ARTIFACT_TEMPORARY_DIRECTORY                    = '${ARTIFACT_TEMPORARY_DIRECTORY}'"
+              echo "\$ARTIFACT_VERSION                                = '${ARTIFACT_VERSION}'"
+              echo "\$ARTIFACT_VERSION_TAG                            = '${ARTIFACT_VERSION_TAG}'"
+              echo "\$ARTIFACT_BUILD_ID                               = '${ARTIFACT_BUILD_ID}'"
+              echo "\$ARTIFACT_BUILD_TAG                              = '${ARTIFACT_BUILD_TAG}'"
+              echo "\$ARTIFACT_TIMESTAMP                              = '${ARTIFACT_TIMESTAMP}'"
+              echo "\$ARTIFACT_ARTIFACT_EXCLUDES_FILE                 = '${ARTIFACT_EXCLUDES_FILE}'"
+              echo ''
+              echo "stage_build_publish_artifact                      = '$(stage_build_publish_artifact)'"
+              echo ''
+              echo "\$DO_ARTIFACTS_SPACES_KEY                         = '***secret***'"
+              echo "\$DO_ARTIFACTS_SPACES_SECRET                      = '***secret***'"
+              echo "\$DO_ARTIFACTS_SPACES_REGION                      = '${DO_ARTIFACTS_SPACES_REGION}'"
+              echo "\$DO_ARTIFACTS_SPACES_BUCKET                      = '${DO_ARTIFACTS_SPACES_BUCKET}'"
+              echo "\$DO_ARTIFACTS_SPACES_ENDPOINT                    = '${DO_ARTIFACTS_SPACES_ENDPOINT}'"
+              echo ''
+              echo "\$WORKSPACE_IMAGE                                 = '${WORKSPACE_IMAGE}'"
+              echo "\$WORKSPACE_IMAGE_VERSION                         = '${WORKSPACE_IMAGE_VERSION}'"
+              echo "\$PHP_FPM_IMAGE                                   = '${PHP_FPM_IMAGE}'"
+              echo "\$PHP_FPM_IMAGE_VERSION                           = '${PHP_FPM_IMAGE_VERSION}'"
+              echo "\$PHP_WORKER_IMAGE                                = '${PHP_WORKER_IMAGE}'"
+              echo "\$PHP_WORKER_IMAGE_VERSION                        = '${PHP_WORKER_IMAGE_VERSION}'"
+              echo "\$NGINX_IMAGE                                     = '${NGINX_IMAGE}'"
+              echo "\$NGINX_IMAGE_VERSION                             = '${NGINX_IMAGE_VERSION}'"
+              echo "\$MYSQL_READY_WAIT_DURATION                       = '${MYSQL_READY_WAIT_DURATION}'"
+              echo ''
+              echo "\$DB_HOST                                         = '${DB_HOST}'"
+              echo "\$DB_PORT                                         = '${DB_PORT}'"
+              echo "\$DB_DATABASE                                     = '${DB_DATABASE}'"
+              echo "\$DB_USERNAME                                     = '${DB_USERNAME}'"
+              echo "\$DB_PASSWORD                                     = '${DB_PASSWORD}'"
+              echo ''
+              echo "id:"
+              id
+            displayName: 'DEBUG: print Environment Variables'
+            condition: eq(variables['debug_mode__stage_build'], true)
+
+          # //////////////////////////////////////////////////////////////////////
+          # // Preparation
+
+          - bash: |
+              cp .env.prod.build .env
+              sed -i 's/___TENANT___/'${APP_TENANT}'/' .env
+            displayName: 'Preparation: setup app environment file for build stage'
+
+          - bash: |
+              export DEBIAN_FRONTEND=noninteractive
+              sudo apt-get -yq install tree || true
+            displayName: 'Preparation: install system/agent dependencies'
+
+          - bash: |
+              php -v
+            displayName: 'Preparation: php version (agent)'
+
+          - bash: |
+              composer install --prefer-dist --no-ansi --no-interaction --no-progress
+            displayName: 'Preparation: php deps + dev installation'
+
+          - bash: |
+              ln -s "${COMPOSE_LARADOCK_CONFIGURATION_PACKAGE_PATH}/docker-compose.ssh.project.yml" docker-compose.ssh.project.yml
+            displayName: 'Preparation: ssh key location'
+
+          # //////////////////////////////////////////////////////////////////////
+          # // ACR
+
+          - task: Bash@3
+            displayName: 'ACR: login'
+            env:
+              USER_DR_URL: '$(ACR_URL)'
+              USER_DR_SP_APP_ID: '$(ACR_SP_APP_ID)'
+              USER_DR_SP_APP_PASSWORD: '$(ACR_SP_APP_PASSWORD)'
+            inputs:
+              targetType: 'inline'
+              workingDirectory: $(Build.Repository.LocalPath)
+              noProfile: false
+              noRc: false
+              script: |
+                echo "${USER_DR_SP_APP_PASSWORD}" | docker login "${USER_DR_URL}" \
+                --username "${USER_DR_SP_APP_ID}" \
+                --password-stdin
+
+          - bash: |
+              docker-compose pull --quiet workspace
+            displayName: "ACR: pull 'workspace' image"
+
+          - bash: |
+              docker-compose pull --quiet mysql
+            displayName: "ACR: pull 'mysql' image"
+
+          # //////////////////////////////////////////////////////////////////////
+          # // Docker
+
+          - bash: |
+              docker --version
+              docker-compose --version
+            displayName: 'Docker: versions'
+
+          # //////////////////////////////////////////////////////////////////////
+          # // JS
+
+          - bash: |
+              docker-compose up -d workspace
+              docker-compose ps
+            displayName: 'JS: ensure required services are running'
+
+          - bash: |
+              docker-compose exec -T --user="${COMPOSE_USER:-laradock}" workspace yarn install --frozen-lockfile
+            displayName: 'JS: dependency installation'
+
+          - bash: |
+              mkdir -p tenants/${APP_TENANT}/maizzle/src/assets/img
+            displayName: 'JS: prepare target locations'
+
+          - bash: |
+              docker-compose exec -T --user="${COMPOSE_USER:-laradock}" workspace yarn clean:all
+            displayName: 'JS: clean previous build'
+
+          - bash: |
+              docker-compose exec -T --user="${COMPOSE_USER:-laradock}" workspace yarn code:style:ci
+            displayName: 'JS: check code style'
+
+          - bash: |
+              docker-compose exec -T --user="${COMPOSE_USER:-laradock}" workspace yarn code:analyse
+            displayName: 'JS: analyse code'
+
+          - bash: |
+              docker-compose exec -T --user="${COMPOSE_USER:-laradock}" workspace yarn build
+            displayName: 'JS: build'
+
+          - bash: |
+              docker-compose exec -T --user="${COMPOSE_USER:-laradock}" workspace yarn code:test:ci
+            displayName: 'JS: test'
+
+          - bash: |
+              tree -La 3 .
+            displayName: 'JS: inspect output'
+
+          # //////////////////////////////////////////////////////////////////////
+          # // Mail templates
+          - bash: |
+              docker-compose exec -T --user="${COMPOSE_USER:-laradock}" workspace yarn \
+                --cwd tenants/$(APP_TENANT)/maizzle install
+              docker-compose exec -T --user="${COMPOSE_USER:-laradock}" workspace yarn \
+                --cwd tenants/$(APP_TENANT)/maizzle setup
+            displayName: 'Maizzle: setup'
+
+          - bash: |
+              docker-compose exec -T -e APP_LOCALE=$(APP_LOCALE) --user="${COMPOSE_USER:-laradock}" workspace yarn \
+                --cwd tenants/$(APP_TENANT)/maizzle production
+              tree -La 3 tenants/$(APP_TENANT)/mailings
+            displayName: 'Maizzle: build'
+
+          # //////////////////////////////////////////////////////////////////////
+          # // PHP
+
+          # wait ${MYSQL_READY_WAIT_DURATION}s hopefully docker db is up and completely running
+          - bash: |
+              docker-compose up -d workspace
+              docker-compose up -d mysql
+              echo -e "INFO:  Wait for '${MYSQL_READY_WAIT_DURATION}' in order to hopefully ensure mysql service is ready for migration"
+              sleep ${MYSQL_READY_WAIT_DURATION}
+              docker-compose ps
+            displayName: 'PHP: ensure required services are running'
+
+          - bash: |
+              docker-compose exec -T --user="${COMPOSE_USER:-laradock}" workspace \
+              composer install --prefer-dist --no-ansi --no-interaction --no-progress -o
+            displayName: 'Preparation: php deps (docker) + dev installation'
+
+          - bash: |
+              docker-compose exec -T --user="${COMPOSE_USER:-laradock}" workspace \
+              php ./vendor/friendsofphp/php-cs-fixer/php-cs-fixer fix --diff --dry-run --stop-on-violation
+            displayName: 'PHP: check code style'
+
+          - bash: |
+              docker-compose exec -T --user="${COMPOSE_USER:-laradock}" workspace \
+              php ./vendor/phpstan/phpstan/phpstan analyse -v
+            displayName: 'PHP: analyse code'
+
+          - bash: |
+              docker-compose exec -T --user="${COMPOSE_USER:-laradock}" workspace php artisan key:generate --force
+            displayName: 'PHP: generate app key'
+
+          - bash: |
+              docker-compose exec -T --user="${COMPOSE_USER:-laradock}" workspace \
+              php artisan migrate:fresh --seed --force --no-ansi
+            displayName: 'PHP: apply migration'
+
+          - bash: |
+              docker-compose exec -T --user="${COMPOSE_USER:-laradock}" workspace \
+              mysqldump --host="${DB_HOST}" --user="${DB_USERNAME}" --password="${DB_PASSWORD}" "${DB_DATABASE}" > db.sql
+            displayName: 'PHP: dump db with migration'
+
+          - bash: |
+              echo "PHP: build"
+            displayName: 'PHP: build'
+
+          - bash: |
+              docker-compose exec -T --user="${COMPOSE_USER:-laradock}" workspace \
+              mysql --host="${DB_HOST}" --user="${DB_USERNAME}" --password="${DB_PASSWORD}" "${DB_DATABASE}" < db.sql
+              docker-compose exec -T --user="${COMPOSE_USER:-laradock}" workspace \
+              php -d short_open_tag=off ./vendor/phpunit/phpunit/phpunit -v --colors=never --stderr --log-junit $(TESTING_PHPUNIT_RESULTS_SEARCH_FOLDER)/$(TESTING_PHPUNIT_RESULTS_FILE_NAME)
+            displayName: 'PHP: run phpunit'
+
+          - bash: |
+              .cicd/bin/cicd-task-runner run .cicd/src/tasks/php-run-phpunit-on-packages \
+                --run-mode=docker \
+                --packages-directory='packages' \
+                --package-local-vendor-directory='vendor'
+            displayName: 'PHP: run phpunit for local packages'
+            condition: and(succeeded(), eq(variables['stage_build__skip_phpunit_run_for_local_packages'], false))
+            env:
+              VERBOSE: 'false'
+              QUIET: 'true'
+
+          - task: PublishTestResults@2
+            displayName: 'PHP: publish phpunit result'
+            inputs:
+              testResultsFormat: '$(TESTING_PHPUNIT_RESULTS_FORMAT)'
+              testResultsFiles: '$(TESTING_PHPUNIT_RESULTS_FILE_PATTERN)'
+              searchFolder: '$(TESTING_PHPUNIT_RESULTS_SEARCH_FOLDER)'
+              testRunTitle: 'phpunit'
+              publishRunAttachments: true
+
+          # //////////////////////////////////////////////////////////////////////
+          # // Artifact
+
+          - bash: |
+              .cicd/bin/cicd-task-runner run .cicd/src/tasks/create-version-information-json \
+                --build-id="${ARTIFACT_BUILD_ID}" \
+                --build-tag="${ARTIFACT_BUILD_TAG}" \
+                --commit="${ARTIFACT_VERSION}" \
+                --build-timestamp="${ARTIFACT_TIMESTAMP}"
+            displayName: 'Artifact: create version file'
+
+          - bash: |
+              php ${APP_CODE_PATH_HOST}/.cicd/bin/artifact \
+                create $(pwd) \
+                --tenant="${APP_TENANT}" \
+                --build-id="${ARTIFACT_BUILD_ID}" \
+                --tempDirectory="${ARTIFACT_TEMPORARY_DIRECTORY}"
+            displayName: 'Artifact: create artifact'
+            condition: eq(variables['stage_build_publish_artifact'], true)
+            env:
+              DO_ARTIFACTS_SPACES_KEY: $(digitalocean_spaces_key)
+              DO_ARTIFACTS_SPACES_SECRET: $(digitalocean_spaces_secret)
+
+          - bash: |
+              if [[ -d "${ARTIFACT_TEMPORARY_DIRECTORY}" ]]; then
+                rm -rf "${ARTIFACT_TEMPORARY_DIRECTORY}"
+              fi
+            displayName: 'Artifact: cleanup temporary artifact directory'

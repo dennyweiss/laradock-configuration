@@ -1,9 +1,0 @@
-variables:
-  # <// kept as reference variables are defined in project-variables
-  #  PROTOTYPE_ENV_USER: ""
-  #  PROTOTYPE_ENV_HOST: ""
-  #  PROTOTYPE_ENV_APP_PATH: ""
-  #  PROTOTYPE_ENV_URL: ""
-  #  PROTOTYPE_ENV_SSH_KNOWN_HOST_ENTRY: ""
-  # //>
-  PROTOTYPE_ENV_SSH_URL: "$(PROTOTYPE_ENV_USER)@$(PROTOTYPE_ENV_HOST)"

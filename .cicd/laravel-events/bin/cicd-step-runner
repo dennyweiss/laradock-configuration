@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+set -e
+set -o pipefail
+
+SCRIPT="${0}"
+SCRIPT_NAME="$(basename "${SCRIPT}")"
+SCRIPT_PATH="$(dirname "${SCRIPT}")"
+
+echo "ERROR: not implemented"
+exit 1

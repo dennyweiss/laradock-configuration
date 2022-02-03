@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+echo "INFO:  Perform prettier check"
+if yarn code:style &> /dev/null; then
+    echo "INFO:  code conforms to prettier"
+    exit 0
+fi
+
+echo "ERROR: prettier failed"
+echo
+echo "INFO:  files that do not comply with code style"
+yarn code:style:fix
+
+echo
+echo "INFO:  show what has to be changed"
+echo
+git diff
+exit 1

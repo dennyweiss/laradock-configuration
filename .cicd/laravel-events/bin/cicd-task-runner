@@ -1,0 +1,221 @@
+#!/usr/bin/env bash
+
+set -e
+set -o pipefail
+
+SCRIPT="${0}"
+SCRIPT_NAME="$(basename "${SCRIPT}")"
+SCRIPT_PATH="$(dirname "${SCRIPT}")"
+
+DOCKER_RUNNER_SERVICE="${DOCKER_RUNNER_SERVICE:-workspace}"
+SUBCOMMAND="${1}"
+SUBCOMMAND_FILE="${2:-false}"
+RUN_MODE='docker'
+
+PROJECT_ROOT="${PROJECT_ROOT:-unknown}"
+if [[ "${PROJECT_ROOT}" == 'unknown' ]]; then
+    PROJECT_ROOT="$(realpath "${SCRIPT_PATH}/../../")"
+fi
+
+cd "${PROJECT_ROOT}" || (echo "ERROR: could not change directory to '${PROJECT_ROOT}'" && exit 1)
+
+subcommand::_usage() {
+    # shellcheck disable=SC2155
+    local usage_message=$(
+        cat <<-UMSG
+USAGE: ${SCRIPT_NAME} [subcommand] [subcommand-file] [options]
+
+    subcommands:
+        run                             # runs subcommand file
+        describe                        # describes subcommand file
+        list                            # lists available subcommand files
+
+    flags (environment):
+        VERBOSE=[false|true]             # defaults to 'false'
+        PROJECT_ROOT=''                  # defaults to '\${SCRIPT_PATH}/../../'
+                                           at call time
+UMSG
+    )
+    echo -e "${usage_message}"
+}
+
+subcommand::_validation() {
+    if [[ "${SUBCOMMAND_FILE}" == 'false' ]]; then
+        echo "ERROR: 'subcommand file' is missing"
+        echo
+        subcommand::_usage
+        exit 1
+    fi
+
+    if [[ ! -f "${SUBCOMMAND_FILE}" ]]; then
+        echo "ERROR: 'subcommand file' is not found at path '${SUBCOMMAND_FILE}'"
+        echo
+        subcommand::_usage
+        exit 1
+    fi
+}
+
+subcommand::run() {
+    # shellcheck disable=SC2199
+    if [[ "${@}" =~ '--list-subcommands' ]]; then
+        LIST_SUBCOMMAND_FILES='true'
+        shift 1
+    fi
+
+    # shellcheck disable=SC2199
+    if [[ "${@}" =~ '--describe' ]]; then
+        DESCRIBE_STEP='true'
+        shift 1
+    fi
+
+    # shellcheck disable=SC2199
+    if [[ "${@}" =~ '--run-mode=local' ]]; then
+        RUN_MODE='local'
+        shift 1
+    fi
+
+    # shellcheck disable=SC2199
+    if [[ "${@}" =~ '--run-mode=docker' ]]; then
+        RUN_MODE='docker'
+        shift 1
+    fi
+
+    if [[ "${DESCRIBE_STEP:-false}" == 'false' ]] \
+        && [[ "${LIST_SUBCOMMAND_FILES:-false}" == 'false' ]]
+    then
+        echo -e "//>>   run '${SUBCOMMAND_FILE}' [${RUN_MODE}]"
+    fi
+
+    case "${RUN_MODE}" in
+        docker)
+            local docker_run_subcommand
+            docker_run_subcommand="docker-compose exec -T"
+            docker_run_subcommand="${docker_run_subcommand} --user=${COMPOSE_USER:-laradock}"
+            docker_run_subcommand="${docker_run_subcommand} ${DOCKER_RUNNER_SERVICE}"
+            docker_run_subcommand="${docker_run_subcommand} ${SUBCOMMAND_FILE}"
+            docker_run_subcommand="${docker_run_subcommand} --run-mode='docker'"
+            docker_run_subcommand="${docker_run_subcommand} --verbose=${VERBOSE:-false}"
+
+            if [[ "${DESCRIBE_STEP:-false}" == 'true' ]]; then
+                docker_run_subcommand="${docker_run_subcommand} --describe"
+            fi
+
+            for argument in "${@}"; do
+                docker_run_subcommand="${docker_run_subcommand} ${argument}"
+            done
+
+            if [[ "${VERBOSE:-false}" == 'true' ]]; then
+                echo "INFO:  docker_run_subcommand"
+                echo "       ${docker_run_subcommand}"
+            fi
+
+            eval "${docker_run_subcommand}"
+            ;;
+        local)
+            local local_run_subcommand
+            local_run_subcommand="${SUBCOMMAND_FILE}"
+            local_run_subcommand="${local_run_subcommand} --run-mode='local'"
+            local_run_subcommand="${local_run_subcommand} --verbose=${VERBOSE:-false}"
+
+            if [[ "${DESCRIBE_STEP:-false}" == 'true' ]]; then
+                local_run_subcommand="${local_run_subcommand} --describe"
+            fi
+
+            for argument in "${@}"; do
+                local_run_subcommand="${local_run_subcommand} ${argument}"
+            done
+
+            if [[ "${VERBOSE:-false}" == 'true' ]]; then
+                echo "INFO:  local_run_subcommand"
+                echo "       ${local_run_subcommand}"
+            fi
+
+            eval "${local_run_subcommand}"
+            ;;
+        *)
+            echo "ERROR: run mode '${RUN_MODE}' not supported"
+            exit 1
+            ;;
+    esac
+}
+
+# shellcheck disable=SC2120
+subcommand::describe() {
+    # shellcheck disable=SC2199
+    if [[ "${@}" =~ '--run-mode=local' ]]; then
+        RUN_MODE='local'
+    fi
+
+    # shellcheck disable=SC2199
+    if [[ "${@}" =~ '--run-mode=docker' ]]; then
+        RUN_MODE='docker'
+    fi
+
+    echo -e "//>>   describe '${SUBCOMMAND_FILE}' [${RUN_MODE}]"
+
+    local describe_subcommand
+    describe_subcommand="${describe_subcommand} subcommand::run"
+    describe_subcommand="${describe_subcommand} --describe"
+
+    for argument in "${@}"; do
+        describe_subcommand="${describe_subcommand} ${argument}"
+    done
+
+    if [[ "${VERBOSE:-false}" == 'true' ]]; then
+        echo "INFO:  describe_subcommand"
+        echo "      ${describe_subcommand}"
+    fi
+
+    eval "${describe_subcommand}"
+}
+
+subcommand::list() {
+    RUN_MODE='local'
+
+    echo -e "//>>   list subcommand-files [${RUN_MODE}]"
+
+    local list_subcommand
+    list_subcommand="${list_subcommand} subcommand::run"
+    list_subcommand="${list_subcommand} --list-subcommands"
+
+    SUBCOMMAND_FILE='.cicd/src/list-subcommand-definitions'
+
+    for argument in "${@}"; do
+        list_subcommand="${list_subcommand} ${argument}"
+    done
+
+    if [[ "${VERBOSE:-false}" == 'true' ]]; then
+        echo "INFO:  list_subcommand"
+        echo "      ${list_subcommand}"
+    fi
+
+    eval "${list_subcommand}"
+}
+
+
+if [[ "${QUIET:-false}" == 'false' ]]; then
+    echo "//>    CI/CD Task Runner <//////////////////////////////////////////////////"
+fi
+
+case "${SUBCOMMAND}" in
+    run)
+        shift 2
+        subcommand::_validation
+        subcommand::run "${@}"
+        ;;
+    describe)
+        shift 2
+        subcommand::_validation
+        subcommand::describe "${@}"
+        ;;
+    list)
+        shift 1
+        subcommand::list "${@}"
+        ;;
+    *)
+        echo "ERROR: subcommand '${SUBCOMMAND}' not supported"
+        echo
+        subcommand::_usage
+        exit 1
+        ;;
+esac

@@ -1,0 +1,8 @@
+variables:
+    # <// kept as reference variables are defined in project-variables
+    #  DO_ARTIFACTS_SPACES_KEY:
+    #  DO_ARTIFACTS_SPACES_SECRET:
+    # //>
+    DO_ARTIFACTS_SPACES_REGION: fra1
+    DO_ARTIFACTS_SPACES_BUCKET: evu-artifacts
+    DO_ARTIFACTS_SPACES_ENDPOINT: https://fra1.digitaloceanspaces.com
